@@ -24,8 +24,9 @@ public abstract class ProgenitorController<P extends Progenitor> {
         long id = item.getId();
         if (items.containsKey(id)) {
             items.put(id,item);
+            return item;
         }
-        return item;
+        return null;
     }
 
     public List<P> getAll() {

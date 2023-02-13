@@ -31,7 +31,12 @@ public class FilmController extends ProgenitorController<Film> {
     @Override
     public Film update(@RequestBody @Valid final Film film) {
         log.info("PUT request for film {}", film);
-        return super.update(film);
+        Film real = super.update(film);
+        if (Objects.isNull(real)) {
+            throw new ValidationException("Wrong film id.");
+        }
+        return real;
+
     }
 
     @GetMapping("/films")

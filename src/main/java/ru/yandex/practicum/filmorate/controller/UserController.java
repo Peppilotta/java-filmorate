@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -30,7 +31,11 @@ public class UserController extends ProgenitorController<User> {
     @Override
     public User update(@RequestBody @Valid final User user) {
         log.info("PUT request for user {}", user);
-        return super.update(user);
+        User real = super.update(user);
+        if (Objects.isNull(real)) {
+            throw new ValidationException("Wrong user id.");
+        }
+        return real;
     }
 
     @GetMapping("/users")
