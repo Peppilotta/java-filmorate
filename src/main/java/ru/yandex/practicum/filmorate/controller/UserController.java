@@ -7,8 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
@@ -33,7 +32,7 @@ public class UserController extends ProgenitorController<User> {
         log.info("PUT request for user {}", user);
         User real = super.update(user);
         if (Objects.isNull(real)) {
-            throw new ValidationException("Wrong user id.");
+            throw new ValidationExceptions("Wrong user id.");
         }
         return real;
     }
@@ -47,20 +46,12 @@ public class UserController extends ProgenitorController<User> {
 
     @Override
     public void validate(User user) {
-        String email = user.getEmail();
-        if (Objects.isNull(email) || email.trim().length() == 0 || !email.contains("@")) {
-            throw new ValidationException("Wrong email");
-        }
-        String login = user.getLogin();
-        if (Objects.isNull(login) || login.trim().length() == 0) {
-            throw new ValidationException("Wrong login");
-        }
         String name = user.getName();
         if (Objects.isNull(name) || name.trim().length() == 0) {
-            user.setName(login);
+            user.setName(user.getLogin());
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
-            throw new ValidationException("Bad birthday");
+            throw new ValidationExceptions("Bad birthday");
         }
     }
 }

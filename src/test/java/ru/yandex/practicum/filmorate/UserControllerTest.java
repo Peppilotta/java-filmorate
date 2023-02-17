@@ -1,13 +1,19 @@
 package ru.yandex.practicum.filmorate;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -16,6 +22,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class UserControllerTest {
 
     static UserController userController = new UserController();
+    private static Validator validator;
+
+    @BeforeEach
+    void setUpValidator() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
 
     @Test
     void validate_StandardBehavior() {
@@ -25,34 +38,54 @@ class UserControllerTest {
                 .birthday(LocalDate.now().minusYears(35))
                 .name("Theodor")
                 .build();
-        userController.validate(user);
+        Set<ConstraintViolation<User>> constraintViolations =
+                validator.validate(user);
+        assertEquals(0, constraintViolations.size());
     }
 
     @Test
     void validate_EmptyEmail() {
-        User user = new User();
-        Exception badName = assertThrows(ValidationException.class,
-                () -> userController.validate(user));
-        assertEquals("Wrong email",badName.getMessage());
+        final User user = User.builder()
+                .email("")
+                .login("fet")
+                .birthday(LocalDate.now().minusYears(35))
+                .name("Theodor")
+                .build();
+        Set<ConstraintViolation<User>> constraintViolations =
+                validator.validate(user);
+        assertEquals(1, constraintViolations.size());
+        assertEquals("Empty email", constraintViolations.iterator().next().
+                getMessage());
     }
 
     @Test
     void validate_WrongEmail() {
-        User user = new User();
-        user.setEmail("email.mail.ru");
-        Exception badName = assertThrows(ValidationException.class,
-                () -> userController.validate(user));
-        assertEquals("Wrong email",badName.getMessage());
+        final User user = User.builder()
+                .email("mail.ru")
+                .login("fet")
+                .birthday(LocalDate.now().minusYears(35))
+                .name("Theodor")
+                .build();
+        Set<ConstraintViolation<User>> constraintViolations =
+                validator.validate(user);
+        assertEquals(1, constraintViolations.size());
+        assertEquals("Wrong email", constraintViolations.iterator().next().
+                getMessage());
     }
 
     @Test
     void validate_LongDescription() {
-        User user = new User();
-        user.setEmail("email@mail.ru");
-        user.setLogin("");
-        Exception badName = assertThrows(ValidationException.class,
-                () -> userController.validate(user));
-        assertEquals("Wrong login",badName.getMessage());
+        final User user = User.builder()
+                .email("fet@mail.ru")
+                .login("")
+                .birthday(LocalDate.now().minusYears(35))
+                .name("Theodor")
+                .build();
+        Set<ConstraintViolation<User>> constraintViolations =
+                validator.validate(user);
+        assertEquals(1, constraintViolations.size());
+        assertEquals("Wrong login", constraintViolations.iterator().next().
+                getMessage());
     }
 
     @Test
@@ -62,13 +95,13 @@ class UserControllerTest {
         user.setLogin("Fet");
         user.setBirthday(LocalDate.parse("28.12.2025",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        Exception badName = assertThrows(ValidationException.class,
+        Exception badName = assertThrows(ValidationExceptions.class,
                 () -> userController.validate(user));
-        assertEquals("Bad birthday",badName.getMessage());
+        assertEquals("Bad birthday", badName.getMessage());
     }
 
     @Test
-    void validate_NegativeDuration() {
+    void validate_EptyName() {
         User user = new User();
         user.setEmail("email@mail.ru");
         user.setLogin("Fet");

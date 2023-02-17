@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
@@ -33,10 +33,9 @@ public class FilmController extends ProgenitorController<Film> {
         log.info("PUT request for film {}", film);
         Film real = super.update(film);
         if (Objects.isNull(real)) {
-            throw new ValidationException("Wrong film id.");
+            throw new ValidationExceptions("Wrong film id.");
         }
         return real;
-
     }
 
     @GetMapping("/films")
@@ -48,20 +47,9 @@ public class FilmController extends ProgenitorController<Film> {
 
     @Override
     public void validate(Film film) {
-        String name = film.getName();
-        if (Objects.isNull(name) || name.trim().length() == 0) {
-            throw new ValidationException("Name can't be empty");
-        }
-        if (film.getDescription().length() > 200) {
-            throw new ValidationException("Description size mast be between 1 and 200");
-        }
         if (film.getReleaseDate().isBefore(LocalDate.parse("28.12.1895",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")))) {
-            throw new ValidationException("Bad date");
-        }
-        if (film.getDuration() < 1) {
-            throw new ValidationException("Bad duration");
+            throw new ValidationExceptions("Bad date");
         }
     }
 }
-
