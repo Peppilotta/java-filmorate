@@ -18,7 +18,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@SpringBootTest
 class UserControllerTest {
 
     static UserController userController = new UserController();
@@ -44,6 +43,20 @@ class UserControllerTest {
     }
 
     @Test
+    void validate_NullEmail() {
+        final User user = User.builder()
+                .login("fet")
+                .birthday(LocalDate.now().minusYears(35))
+                .name("Theodor")
+                .build();
+        Set<ConstraintViolation<User>> constraintViolations =
+                validator.validate(user);
+        assertEquals(2, constraintViolations.size());
+        assertEquals("Email absent", constraintViolations.iterator().next().
+                getMessage());
+    }
+
+    @Test
     void validate_EmptyEmail() {
         final User user = User.builder()
                 .email("")
@@ -54,7 +67,7 @@ class UserControllerTest {
         Set<ConstraintViolation<User>> constraintViolations =
                 validator.validate(user);
         assertEquals(1, constraintViolations.size());
-        assertEquals("Empty email", constraintViolations.iterator().next().
+        assertEquals("Email absent", constraintViolations.iterator().next().
                 getMessage());
     }
 
