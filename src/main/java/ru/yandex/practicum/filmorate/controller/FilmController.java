@@ -1,70 +1,58 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import javax.validation.Valid;
+import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 @RestController
 @Slf4j
-public class FilmController extends ProgenitorController<Film> {
+public class FilmController {
+    private final Map<Long, Film> films = new HashMap<>();
+    private long meter = 1L;
 
     @PostMapping("/films")
-    @Override
     public Film create(@Valid @RequestBody final Film film) {
+        validate(film);
+        film.setId(meter);
+        films.put(meter, film);
+        meter++;
         log.info("POST request for film {}", film);
-        return super.create(film);
+        return film;
     }
 
     @PutMapping("/films")
-    @Override
-    public Film update(@Valid @RequestBody  final Film film) {
+    public Film update(@Valid @RequestBody final Film film) {
+        validate(film);
+        long id = film.getId();
         log.info("PUT request for film {}", film);
-        Film real = super.update(film);
-        if (Objects.isNull(real)) {
-            throw new ValidationExceptions("Wrong film id.");
+        if (films.containsKey(id)) {
+            films.put(id, film);
+            return film;
+        } else {
+            throw new ValidationException("Wrong user id.");
         }
-        return real;
     }
 
     @GetMapping("/films")
-    @Override
     public List<Film> getAll() {
         log.info("GET request");
-        return new ArrayList<>(super.getAll());
+        return new ArrayList<>(films.values());
     }
 
-/*
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ResponseBody
-    public ValidationFailureResponse validationError(MethodArgumentNotValidException ex) {
-        BindingResult result = ex.getBindingResult();
-        final List<FieldError> fieldErrors = result.getFieldErrors();
-
-        return new ValidationFailureResponse((FieldError[])(fieldErrors.toArray(new FieldError[fieldErrors.size()])));
-    }
-*/
-
-    @Override
     public void validate(Film film) {
         if (film.getReleaseDate().isBefore(LocalDate.parse("28.12.1895",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")))) {
