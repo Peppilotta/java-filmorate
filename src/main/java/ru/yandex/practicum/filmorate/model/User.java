@@ -20,7 +20,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class User extends Progenitor {
-    @NotNull(message = "Email absent")
     @NotBlank(message = "Email absent")
     @Email(message = "Wrong email")
     private String email;

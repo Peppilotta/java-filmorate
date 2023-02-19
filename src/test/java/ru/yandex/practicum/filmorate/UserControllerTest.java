@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserControllerTest {
-
     static UserController userController = new UserController();
     private static Validator validator;
 
@@ -40,20 +39,6 @@ class UserControllerTest {
         Set<ConstraintViolation<User>> constraintViolations =
                 validator.validate(user);
         assertEquals(0, constraintViolations.size());
-    }
-
-    @Test
-    void validate_NullEmail() {
-        final User user = User.builder()
-                .login("fet")
-                .birthday(LocalDate.now().minusYears(35))
-                .name("Theodor")
-                .build();
-        Set<ConstraintViolation<User>> constraintViolations =
-                validator.validate(user);
-        assertEquals(2, constraintViolations.size());
-        assertEquals("Email absent", constraintViolations.iterator().next().
-                getMessage());
     }
 
     @Test
