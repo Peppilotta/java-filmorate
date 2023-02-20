@@ -19,14 +19,21 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Film extends Progenitor {
+public class Film {
+
+    @NotNull
+    long id;
+
     @NotBlank(message = "Name can't be empty")
     private String name;
+
     @NotNull
     @Size(min = 1, max = 200, message = "Description size mast be between 1 and 200")
     private String description;
+
     @NotNull(message = "Date mast be real")
     private LocalDate releaseDate;
+
     @Positive(message = "Bad duration")
     private long duration;
 }

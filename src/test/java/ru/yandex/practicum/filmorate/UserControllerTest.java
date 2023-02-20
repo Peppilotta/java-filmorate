@@ -92,9 +92,11 @@ class UserControllerTest {
         user.setLogin("Fet");
         user.setBirthday(LocalDate.parse("28.12.2025",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        Exception badName = assertThrows(ValidationExceptions.class,
-                () -> userController.validate(user));
-        assertEquals("Bad birthday", badName.getMessage());
+        Set<ConstraintViolation<User>> constraintViolations =
+                validator.validate(user);
+        assertEquals(1, constraintViolations.size());
+        assertEquals("Bad birthday", constraintViolations.iterator().next().
+                getMessage());
     }
 
     @Test
@@ -104,7 +106,7 @@ class UserControllerTest {
         user.setLogin("Fet");
         user.setBirthday(LocalDate.parse("28.12.1985",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        userController.validate(user);
+        userController.fillUserName(user);
         assertEquals(user.getLogin(), user.getName());
     }
 }

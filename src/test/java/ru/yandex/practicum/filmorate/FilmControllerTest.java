@@ -89,12 +89,11 @@ class FilmControllerTest {
     void validate_BadReleaseDate() {
         Film film = new Film();
         film.setName("Film");
-        film.setDescription("Too long description. Too long description. " +
-                "Too long description. Too long description. Too long description.");
+        film.setDescription("Too long description.");
         film.setReleaseDate(LocalDate.parse("28.12.1885",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")));
         Exception badName = assertThrows(ValidationExceptions.class,
-                () -> filmController.validate(film));
+                () -> filmController.validateDateCreation(film));
         assertEquals("Bad date", badName.getMessage());
     }
 

@@ -6,12 +6,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.Valid;
 import javax.validation.ValidationException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,7 +24,7 @@ public class UserController {
 
     @PostMapping("/users")
     public User create(@RequestBody @Valid final User user) {
-        validate(user);
+        fillUserName(user);
         user.setId(meter);
         users.put(meter, user);
         meter++;
@@ -36,7 +34,7 @@ public class UserController {
 
     @PutMapping("/users")
     public User update(@RequestBody @Valid final User user) {
-        validate(user);
+        fillUserName(user);
         long id = user.getId();
         log.info("PUT request for user {}", user);
         if (users.containsKey(id)) {
@@ -53,13 +51,10 @@ public class UserController {
         return new ArrayList<>(users.values());
     }
 
-    public void validate(User user) {
+    public void fillUserName(User user) {
         String name = user.getName();
         if (Objects.isNull(name) || name.trim().length() == 0) {
             user.setName(user.getLogin());
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            throw new ValidationExceptions("Bad birthday");
         }
     }
 }

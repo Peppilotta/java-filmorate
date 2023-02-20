@@ -9,6 +9,7 @@ import lombok.ToString;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import java.time.LocalDate;
 
@@ -18,13 +19,20 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends Progenitor {
+public class User {
+
+    @NotNull
+    long id;
+
     @NotBlank(message = "Email absent")
     @Email(message = "Wrong email")
     private String email;
+
     @NotBlank(message = "Wrong login")
     private String login;
+
     private String name;
-    @Past
+
+    @Past(message = "Bad birthday")
     private LocalDate birthday;
 }
