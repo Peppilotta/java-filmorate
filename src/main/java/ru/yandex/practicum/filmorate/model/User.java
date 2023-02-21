@@ -21,8 +21,7 @@ import java.time.LocalDate;
 @Builder
 public class User {
 
-    @NotNull
-    long id;
+    private long id;
 
     @NotBlank(message = "Email absent")
     @Email(message = "Wrong email")

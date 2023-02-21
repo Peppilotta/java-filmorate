@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -18,11 +19,12 @@ import java.util.Objects;
 
 @RestController
 @Slf4j
+@RequestMapping("/users")
 public class UserController {
     private final Map<Long, User> users = new HashMap<>();
     private long meter = 1L;
 
-    @PostMapping("/users")
+    @PostMapping
     public User create(@RequestBody @Valid final User user) {
         fillUserName(user);
         user.setId(meter);
@@ -32,7 +34,7 @@ public class UserController {
         return user;
     }
 
-    @PutMapping("/users")
+    @PutMapping
     public User update(@RequestBody @Valid final User user) {
         fillUserName(user);
         long id = user.getId();
@@ -45,7 +47,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/users")
+    @GetMapping
     public List<User> getAll() {
         log.info("GET request");
         return new ArrayList<>(users.values());
