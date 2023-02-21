@@ -39,12 +39,11 @@ public class UserController {
         fillUserName(user);
         long id = user.getId();
         log.info("PUT request for user {}", user);
-        if (users.containsKey(id)) {
-            users.put(id, user);
-            return user;
-        } else {
+        if (!users.containsKey(id)) {
             throw new ValidationException("Wrong user id.");
         }
+        users.put(id, user);
+        return user;
     }
 
     @GetMapping
