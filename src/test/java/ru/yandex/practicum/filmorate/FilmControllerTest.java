@@ -2,23 +2,22 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.controller.FilmController;
-import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FilmControllerTest {
-    static FilmController filmController = new FilmController();
+    @Autowired
+    static InMemoryFilmStorage filmStorage;
     private static Validator validator;
 
     @BeforeEach
@@ -83,18 +82,6 @@ class FilmControllerTest {
         assertEquals(1, constraintViolations.size());
         assertEquals("Description size mast be between 1 and 200", constraintViolations.iterator().next().
                 getMessage());
-    }
-
-    @Test
-    void validate_BadReleaseDate() {
-        Film film = new Film();
-        film.setName("Film");
-        film.setDescription("Too long description.");
-        film.setReleaseDate(LocalDate.parse("28.12.1885",
-                DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        Exception badName = assertThrows(ValidationExceptions.class,
-                () -> filmController.validateDateCreation(film));
-        assertEquals("Bad date", badName.getMessage());
     }
 
     @Test

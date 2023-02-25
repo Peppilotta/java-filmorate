@@ -2,9 +2,8 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -15,10 +14,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserControllerTest {
-    static UserController userController = new UserController();
+    static InMemoryUserStorage userStorage = new InMemoryUserStorage();
     private static Validator validator;
 
     @BeforeEach
@@ -106,7 +104,7 @@ class UserControllerTest {
         user.setLogin("Fet");
         user.setBirthday(LocalDate.parse("28.12.1985",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        userController.fillUserName(user);
+        userStorage.fillUserName(user);
         assertEquals(user.getLogin(), user.getName());
     }
 }

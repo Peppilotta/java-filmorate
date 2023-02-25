@@ -9,13 +9,13 @@ import lombok.ToString;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
 import java.time.LocalDate;
+import java.util.Set;
 
 @Getter
 @Setter
-@ToString(callSuper = true)
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -34,4 +34,6 @@ public class User {
 
     @Past(message = "Bad birthday")
     private LocalDate birthday;
+
+    private Set<Long> friends;
 }
