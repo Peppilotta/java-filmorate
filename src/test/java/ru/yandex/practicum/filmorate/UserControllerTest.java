@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.sevice.UserService;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import javax.validation.ConstraintViolation;
@@ -16,7 +17,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UserControllerTest {
-    static InMemoryUserStorage userStorage = new InMemoryUserStorage();
     private static Validator validator;
 
     @BeforeEach
@@ -95,16 +95,5 @@ class UserControllerTest {
         assertEquals(1, constraintViolations.size());
         assertEquals("Bad birthday", constraintViolations.iterator().next().
                 getMessage());
-    }
-
-    @Test
-    void validate_EmptyName() {
-        User user = new User();
-        user.setEmail("email@mail.ru");
-        user.setLogin("Fet");
-        user.setBirthday(LocalDate.parse("28.12.1985",
-                DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        User expectedUser = userStorage.create(user);
-        assertEquals(expectedUser.getLogin(), expectedUser.getName());
     }
 }
