@@ -9,9 +9,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.IdIsNotNumber;
+import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.sevice.ValidationOfInputNumbers;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.sevice.FilmService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -21,40 +22,50 @@ import java.util.List;
 @RequestMapping("/films")
 public class FilmController {
 
-    private final InMemoryFilmStorage filmStorage;
-    private final ValidationOfInputNumbers validationOfInputNumbers;
+    private final FilmService filmService;
 
     @Autowired
-    public FilmController(InMemoryFilmStorage filmStorage, ValidationOfInputNumbers validationOfInputNumbers) {
-        this.filmStorage = filmStorage;
-        this.validationOfInputNumbers = validationOfInputNumbers;
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody final Film film) {
         log.info("POST request for film {}", film);
-        return filmStorage.create(film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody final Film film) {
         log.info("PUT request for film {}", film);
-        return filmStorage.update(film);
+        return filmService.update(film);
     }
 
     @GetMapping
     public List<Film> getFilms() {
         log.info("GET request - all films");
-        return filmStorage.getFilms();
+        return filmService.getFilms();
     }
 
     @GetMapping("/{id}")
     public Film getFilm(@PathVariable String id) {
         log.info("GET request - films with id={}", id);
-        validationOfInputNumbers.validateIdIsNumber(id, "Film");
-        long filmId = Long.parseLong(id);
-        validationOfInputNumbers.validatePositiveInputNumber(filmId, "Film");
-        filmStorage.testIfExistFilmWithId(filmId);
-        return filmStorage.getFilm(filmId);
+        long filmId = validateIdIsNumber(id);
+        validatePositive(filmId);
+        return filmService.getFilm(filmId);
+    }
+
+    private void validatePositive(long id) {
+        if (id < 0) {
+            throw new IllegalInputId("Film id is not positive");
+        }
+    }
+
+    private long validateIdIsNumber(String id) throws IdIsNotNumber {
+        try {
+            return Long.parseLong(id);
+        } catch (IdIsNotNumber e) {
+            throw new IdIsNotNumber("Film id must be a number");
+        }
     }
 }

@@ -8,9 +8,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.IdIsNotNumber;
+import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.sevice.UserService;
-import ru.yandex.practicum.filmorate.sevice.ValidationOfInputNumbers;
+import ru.yandex.practicum.filmorate.sevice.UserFriendsService;
 
 import java.util.List;
 
@@ -19,13 +20,11 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserFriendsController {
 
-    private final UserService userService;
-    private final ValidationOfInputNumbers validationOfInputNumbers;
+    private final UserFriendsService userService;
 
     @Autowired
-    public UserFriendsController(UserService userService, ValidationOfInputNumbers validationOfInputNumbers) {
+    public UserFriendsController(UserFriendsService userService) {
         this.userService = userService;
-        this.validationOfInputNumbers = validationOfInputNumbers;
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -43,30 +42,40 @@ public class UserFriendsController {
     }
 
     private Long[] testForAddOrDeleteFriend(String id, String friendId) {
-        validationOfInputNumbers.validateIdIsNumber(id, "User");
-        validationOfInputNumbers.validateIdIsNumber(friendId, "User");
-        long user1Id = Long.parseLong(id);
-        long user2Id = Long.parseLong(friendId);
-        validationOfInputNumbers.validatePositiveInputNumber(user1Id, "User");
-        validationOfInputNumbers.validatePositiveInputNumber(user2Id, "User");
-        userService.testIfExistUserWithId(user1Id);
-        userService.testIfExistUserWithId(user2Id);
+        long user1Id = validateIdIsNumber(id);
+        long user2Id = validateIdIsNumber(friendId);
+        validatePositive(user1Id);
+        validatePositive(user2Id);
         return new Long[]{user1Id, user2Id};
     }
 
     @GetMapping("/{id}/friends")
     public List<User> getFriends(@PathVariable String id) {
         log.info("Get request for list friends of user with id={}", id);
-        validationOfInputNumbers.validateIdIsNumber(id, "User");
-        long userId = Long.parseLong(id);
-        validationOfInputNumbers.validatePositiveInputNumber(userId, "User");
-        return userService.getFriends(userId);
+        long userId = validateIdIsNumber(id);
+        validatePositive(userId);
+        return userService.getFriendIds(userId);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public List<User> getCommonFriends(@PathVariable String id, @PathVariable String otherId) {
-        log.info("Get request for common list of friends of user with id={} and user with id={} ", id, otherId);
+        log.info("Get request for common list of friends of user with id={} and user with id={} "
+                , id, otherId);
         Long[] ids = testForAddOrDeleteFriend(id, otherId);
         return userService.getCommonFriends(ids[0], ids[1]);
+    }
+
+    private void validatePositive(long id) {
+        if (id < 0) {
+            throw new IllegalInputId("User id is not positive");
+        }
+    }
+
+    private long validateIdIsNumber(String id) throws IdIsNotNumber {
+        try {
+            return Long.parseLong(id);
+        } catch (IdIsNotNumber e) {
+            throw new IdIsNotNumber("User id must be a number");
+        }
     }
 }

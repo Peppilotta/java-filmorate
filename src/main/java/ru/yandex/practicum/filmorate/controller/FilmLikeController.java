@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.IdIsNotNumber;
+import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.sevice.FilmService;
-import ru.yandex.practicum.filmorate.sevice.UserService;
-import ru.yandex.practicum.filmorate.sevice.ValidationOfInputNumbers;
+import ru.yandex.practicum.filmorate.sevice.FilmLikesService;
 
 import java.util.List;
 
@@ -21,16 +21,11 @@ import java.util.List;
 @RequestMapping("/films")
 public class FilmLikeController {
 
-    private final FilmService filmService;
-    private final UserService userService;
-    private final ValidationOfInputNumbers validationOfInputNumbers;
+    private final FilmLikesService filmService;
 
     @Autowired
-    public FilmLikeController(FilmService filmService, UserService userService,
-                              ValidationOfInputNumbers validationOfInputNumbers) {
+    public FilmLikeController(FilmLikesService filmService) {
         this.filmService = filmService;
-        this.userService = userService;
-        this.validationOfInputNumbers = validationOfInputNumbers;
     }
 
     @PutMapping("/{id}/like/{userId}")
@@ -48,23 +43,32 @@ public class FilmLikeController {
     }
 
     private Long[] testForAddOrDeleteLike(String id, String userId) {
-        validationOfInputNumbers.validateIdIsNumber(id, "Film");
-        validationOfInputNumbers.validateIdIsNumber(userId, "User");
-        long filmId = Long.parseLong(id);
-        long userNumber = Long.parseLong(userId);
-        validationOfInputNumbers.validatePositiveInputNumber(filmId, "Film");
-        validationOfInputNumbers.validatePositiveInputNumber(userNumber, "User");
-        filmService.testIfExistFilmWithId(filmId);
-        userService.testIfExistUserWithId(userNumber);
+        long filmId = validateIdIsNumber(id, "Film");
+        long userNumber = validateIdIsNumber(userId, "User");
+        validatePositive(filmId, "Film");
+        validatePositive(userNumber, "User");
         return new Long[]{filmId, userNumber};
     }
 
     @GetMapping("/popular")
     public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") String count) {
         log.info("GET request - popular films, highest {}", count);
-        validationOfInputNumbers.validateIdIsNumber(count, "Count");
-        int countNumber = Integer.parseInt(count);
-        validationOfInputNumbers.validatePositiveInputNumber(countNumber, "Count");
+        int countNumber = (int) validateIdIsNumber(count, "Count");
+        validatePositive(countNumber, "Count");
         return filmService.getCountFavoriteFilms(countNumber);
+    }
+
+    private void validatePositive(long id, String item) {
+        if (id < 0) {
+            throw new IllegalInputId(item + " id is not positive");
+        }
+    }
+
+    private long validateIdIsNumber(String id, String item) throws IdIsNotNumber {
+        try {
+            return Long.parseLong(id);
+        } catch (IdIsNotNumber e) {
+            throw new IdIsNotNumber(item + " id must be a number");
+        }
     }
 }

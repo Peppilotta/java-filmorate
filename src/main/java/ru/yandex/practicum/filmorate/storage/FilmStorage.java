@@ -14,5 +14,5 @@ public interface FilmStorage {
 
     Film getFilm(long id);
 
-    void testIfExistFilmWithId(long id);
+    boolean containsFilm(long id);
 }

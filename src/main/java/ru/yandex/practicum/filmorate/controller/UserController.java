@@ -9,9 +9,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.exception.IdIsNotNumber;
+import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.sevice.ValidationOfInputNumbers;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.sevice.UserService;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -20,40 +21,50 @@ import java.util.List;
 @Slf4j
 @RequestMapping("/users")
 public class UserController {
-    private final InMemoryUserStorage userStorage;
-    private final ValidationOfInputNumbers validationOfInputNumbers;
+    private final UserService userService;
 
     @Autowired
-    public UserController(InMemoryUserStorage userStorage, ValidationOfInputNumbers validationOfInputNumbers) {
-        this.userStorage = userStorage;
-        this.validationOfInputNumbers = validationOfInputNumbers;
+    public UserController(UserService userService) {
+        this.userService = userService;
     }
 
     @PostMapping
     public User create(@RequestBody @Valid final User user) {
         log.info("POST request for user {}", user);
-        return userStorage.create(user);
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody @Valid final User user) {
         log.info("PUT request for user {}", user);
-        return userStorage.update(user);
+        return userService.update(user);
     }
 
     @GetMapping
     public List<User> getUsers() {
         log.info("GET request - all users");
-        return userStorage.getUsers();
+        return userService.getUsers();
     }
 
     @GetMapping("/{id}")
     public User getUser(@PathVariable String id) {
         log.info("GET request - user id={} ", id);
-        validationOfInputNumbers.validateIdIsNumber(id, "User");
-        long userId = Long.parseLong(id);
-        validationOfInputNumbers.validatePositiveInputNumber(userId, "User");
-        userStorage.testIfExistUserWithId(userId);
-        return userStorage.getUser(userId);
+        long userId = validateIdIsNumber(id);
+        validatePositive(userId);
+        return userService.getUser(userId);
+    }
+
+    private void validatePositive(long id) {
+        if (id < 0) {
+            throw new IllegalInputId("User id is not positive");
+        }
+    }
+
+    private long validateIdIsNumber(String id) throws IdIsNotNumber {
+        try {
+            return Long.parseLong(id);
+        } catch (IdIsNotNumber e) {
+            throw new IdIsNotNumber("User id must be a number");
+        }
     }
 }

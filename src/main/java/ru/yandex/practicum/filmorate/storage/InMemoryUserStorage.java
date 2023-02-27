@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.UserNotExist;
 import ru.yandex.practicum.filmorate.model.User;
 
-import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +18,6 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User create(User user) {
-        fillUserName(user);
         user.setId(meter);
         users.put(meter, user);
         meter++;
@@ -28,10 +26,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        fillUserName(user);
         long id = user.getId();
-        if (!users.containsKey(id)) {
-            throw new ValidationException("Wrong user id.");
+        if (!containsUser(id)) {
+            return null;
         }
         users.put(id, user);
         return user;
@@ -44,23 +41,17 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User getUser(long id) {
-        if (!users.containsKey(id)) {
+        if (!containsUser(id)) {
             return null;
         }
         return users.get(id);
     }
 
-    public void fillUserName(User user) {
-        String name = user.getName();
-        if (Objects.isNull(name) || name.trim().length() == 0) {
-            user.setName(user.getLogin());
-        }
-    }
-
     @Override
-    public void testIfExistUserWithId(long id) {
+    public boolean containsUser(long id) {
         if (Objects.isNull(users.get(id))) {
             throw new UserNotExist("User with " + id + NOT_EXIST);
         }
+        return true;
     }
 }

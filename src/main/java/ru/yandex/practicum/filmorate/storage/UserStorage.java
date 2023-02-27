@@ -14,5 +14,5 @@ public interface UserStorage {
 
     User getUser(long id);
 
-    void testIfExistUserWithId(long id);
+    boolean containsUser(long id);
 }

@@ -104,7 +104,7 @@ class UserControllerTest {
         user.setLogin("Fet");
         user.setBirthday(LocalDate.parse("28.12.1985",
                 DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        userStorage.fillUserName(user);
-        assertEquals(user.getLogin(), user.getName());
+        User expectedUser = userStorage.create(user);
+        assertEquals(expectedUser.getLogin(), expectedUser.getName());
     }
 }

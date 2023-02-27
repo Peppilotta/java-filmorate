@@ -11,6 +11,7 @@ import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 @Getter
@@ -35,5 +36,5 @@ public class User {
     @Past(message = "Bad birthday")
     private LocalDate birthday;
 
-    private Set<Long> friends;
+    private Set<Long> friendIds = new HashSet<>();
 }
