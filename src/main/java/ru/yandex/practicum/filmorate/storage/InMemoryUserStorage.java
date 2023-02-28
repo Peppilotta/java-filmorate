@@ -50,7 +50,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public boolean containsUser(long id) {
         if (Objects.isNull(users.get(id))) {
-            throw new UserNotExist("User with " + id + NOT_EXIST);
+            throw new UserNotExist("User with id=" + id + NOT_EXIST);
         }
         return true;
     }

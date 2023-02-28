@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.IdIsNotNumber;
-import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.sevice.FilmService;
 
@@ -48,24 +46,8 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilm(@PathVariable String id) {
+    public Film getFilm(@PathVariable long id) {
         log.info("GET request - films with id={}", id);
-        long filmId = validateIdIsNumber(id);
-        validatePositive(filmId);
-        return filmService.getFilm(filmId);
-    }
-
-    private void validatePositive(long id) {
-        if (id < 0) {
-            throw new IllegalInputId("Film id is not positive");
-        }
-    }
-
-    private long validateIdIsNumber(String id) throws IdIsNotNumber {
-        try {
-            return Long.parseLong(id);
-        } catch (IdIsNotNumber e) {
-            throw new IdIsNotNumber("Film id must be a number");
-        }
+        return filmService.getFilm(id);
     }
 }

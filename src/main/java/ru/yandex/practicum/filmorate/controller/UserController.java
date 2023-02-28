@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.IdIsNotNumber;
-import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.sevice.UserService;
 
@@ -47,24 +45,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable String id) {
+    public User getUser(@PathVariable long id) {
         log.info("GET request - user id={} ", id);
-        long userId = validateIdIsNumber(id);
-        validatePositive(userId);
-        return userService.getUser(userId);
-    }
-
-    private void validatePositive(long id) {
-        if (id < 0) {
-            throw new IllegalInputId("User id is not positive");
-        }
-    }
-
-    private long validateIdIsNumber(String id) throws IdIsNotNumber {
-        try {
-            return Long.parseLong(id);
-        } catch (IdIsNotNumber e) {
-            throw new IdIsNotNumber("User id must be a number");
-        }
+        return userService.getUser(id);
     }
 }

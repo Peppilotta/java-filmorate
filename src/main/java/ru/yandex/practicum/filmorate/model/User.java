@@ -10,6 +10,7 @@ import lombok.ToString;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
+import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,6 +23,7 @@ import java.util.Set;
 @Builder
 public class User {
 
+    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Email absent")

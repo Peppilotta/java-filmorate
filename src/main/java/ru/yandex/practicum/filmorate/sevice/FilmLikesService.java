@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.sevice;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.IllegalInputId;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -41,9 +40,6 @@ public class FilmLikesService {
     }
 
     public List<Film> getCountFavoriteFilms(int count) {
-        if (count < 0) {
-            throw new IllegalInputId("Number of lines must be positive. ");
-        }
         List<Film> allFilms = filmStorage.getFilms();
         int checkedCount = allFilms.size();
         if (checkedCount < count) {

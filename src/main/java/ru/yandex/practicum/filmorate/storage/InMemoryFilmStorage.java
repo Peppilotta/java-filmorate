@@ -50,7 +50,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public boolean containsFilm(long id) {
         if (Objects.isNull(films.get(id))) {
-            throw new FilmNotExist("Film with " + id + " not exist. ");
+            throw new FilmNotExist("Film with id=" + id + " not exist. ");
         }
         return true;
     }
