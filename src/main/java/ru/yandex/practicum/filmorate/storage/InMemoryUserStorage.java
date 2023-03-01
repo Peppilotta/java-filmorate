@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.UserNotExist;
+import ru.yandex.practicum.filmorate.exception.UserDoesNotExistException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public boolean containsUser(long id) {
         if (Objects.isNull(users.get(id))) {
-            throw new UserNotExist("User with id=" + id + NOT_EXIST);
+            throw new UserDoesNotExistException("User with id=" + id + NOT_EXIST);
         }
         return true;
     }
