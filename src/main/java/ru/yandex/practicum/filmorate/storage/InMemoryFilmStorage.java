@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
@@ -28,7 +27,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film update(Film film) {
         long id = film.getId();
         if (!containsFilm(id)) {
-            return null;
+            throw new FilmDoesNotExistException("Film with id=" + id + " not exist. ");
         }
         films.put(id, film);
         return film;
@@ -42,16 +41,13 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film getFilm(long id) {
         if (!containsFilm(id)) {
-            return null;
+            throw new FilmDoesNotExistException("Film with id=" + id + " not exist. ");
         }
         return films.get(id);
     }
 
     @Override
     public boolean containsFilm(long id) {
-        if (Objects.isNull(films.get(id))) {
-            throw new FilmDoesNotExistException("Film with id=" + id + " not exist. ");
-        }
-        return true;
+        return films.containsKey(id);
     }
 }

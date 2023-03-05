@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 public class FilmService {
-    private final LocalDate filmsStart = LocalDate.parse("28.12.1895",
+    private static final LocalDate DATE_OF_FIRST_FILM = LocalDate.parse("28.12.1895",
             DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
     private final FilmStorage filmStorage;
@@ -81,7 +81,7 @@ public class FilmService {
     }
 
     private void validateDateCreation(Film film) {
-        if (film.getReleaseDate().isBefore(filmsStart)) {
+        if (film.getReleaseDate().isBefore(DATE_OF_FIRST_FILM)) {
             throw new ValidationExceptions("Bad date");
         }
     }

@@ -69,7 +69,7 @@ public class UserService {
         user2Friends.remove(userId);
     }
 
-    public List<User> getFriendIds(long userId) {
+    public List<User> getFriends(long userId) {
         log.info("Get list friends of user with id={}", userId);
         userStorage.containsUser(userId);
         Set<Long> userFriends = userStorage.getUser(userId).getFriendIds();
@@ -82,16 +82,16 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public List<User> getCommonFriends(long user1Id, long user2Id) {
+    public List<User> getCommonFriends(long userId, long otherUserId) {
         log.info("Get request for common list of friends of user with id={} and user with id={} "
-                , user1Id, user2Id);
-        userStorage.containsUser(user1Id);
-        userStorage.containsUser(user2Id);
-        Set<Long> user1Friends = userStorage.getUser(user1Id).getFriendIds();
-        Set<Long> user2Friends = userStorage.getUser(user2Id).getFriendIds();
-        Set<Long> cross = user1Friends
+                , userId, otherUserId);
+        userStorage.containsUser(userId);
+        userStorage.containsUser(otherUserId);
+        Set<Long> userFriendIds = userStorage.getUser(userId).getFriendIds();
+        Set<Long> otherUserFriendIds = userStorage.getUser(otherUserId).getFriendIds();
+        Set<Long> cross = userFriendIds
                 .stream()
-                .filter(user2Friends::contains)
+                .filter(otherUserFriendIds::contains)
                 .collect(Collectors.toSet());
         if (cross.isEmpty()) {
             return new ArrayList<>();
@@ -104,7 +104,7 @@ public class UserService {
 
     private void fillUserName(User user) {
         String name = user.getName();
-        if (Objects.isNull(name) || name.trim().length() == 0) {
+        if (Objects.isNull(name) || name.isBlank()) {
             user.setName(user.getLogin());
         }
     }
