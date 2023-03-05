@@ -1,61 +1,67 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.sevice.UserService;
 
 import javax.validation.Valid;
-import javax.validation.ValidationException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @RestController
-@Slf4j
 @RequestMapping("/users")
 public class UserController {
-    private final Map<Long, User> users = new HashMap<>();
-    private long meter = 1L;
+    private final UserService userService;
+
+    @Autowired
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping
     public User create(@RequestBody @Valid final User user) {
-        fillUserName(user);
-        user.setId(meter);
-        users.put(meter, user);
-        meter++;
-        log.info("POST request for user {}", user);
-        return user;
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@RequestBody @Valid final User user) {
-        fillUserName(user);
-        long id = user.getId();
-        log.info("PUT request for user {}", user);
-        if (!users.containsKey(id)) {
-            throw new ValidationException("Wrong user id.");
-        }
-        users.put(id, user);
-        return user;
+        return userService.update(user);
     }
 
     @GetMapping
-    public List<User> getAll() {
-        log.info("GET request");
-        return new ArrayList<>(users.values());
+    public List<User> getUsers() {
+        return userService.getUsers();
     }
 
-    public void fillUserName(User user) {
-        String name = user.getName();
-        if (Objects.isNull(name) || name.trim().length() == 0) {
-            user.setName(user.getLogin());
-        }
+    @GetMapping("/{id}")
+    public User getUser(@PathVariable long id) {
+        return userService.getUser(id);
+    }
+
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable long id, @PathVariable long friendId) {
+        userService.addFriend(id, friendId);
+    }
+
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void deleteFriend(@PathVariable long id, @PathVariable long friendId) {
+        userService.deleteFriend(id, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> getFriends(@PathVariable long id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public List<User> getCommonFriends(@PathVariable long id, @PathVariable long otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 }

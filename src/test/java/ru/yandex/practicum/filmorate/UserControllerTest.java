@@ -2,8 +2,6 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.controller.UserController;
-import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.User;
 
 import javax.validation.ConstraintViolation;
@@ -15,10 +13,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserControllerTest {
-    static UserController userController = new UserController();
     private static Validator validator;
 
     @BeforeEach
@@ -97,16 +93,5 @@ class UserControllerTest {
         assertEquals(1, constraintViolations.size());
         assertEquals("Bad birthday", constraintViolations.iterator().next().
                 getMessage());
-    }
-
-    @Test
-    void validate_EmptyName() {
-        User user = new User();
-        user.setEmail("email@mail.ru");
-        user.setLogin("Fet");
-        user.setBirthday(LocalDate.parse("28.12.1985",
-                DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        userController.fillUserName(user);
-        assertEquals(user.getLogin(), user.getName());
     }
 }

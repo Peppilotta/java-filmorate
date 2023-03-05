@@ -10,17 +10,21 @@ import lombok.ToString;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
-@ToString(callSuper = true)
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Film {
 
+    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Name can't be empty")
@@ -35,4 +39,6 @@ public class Film {
 
     @Positive(message = "Bad duration")
     private long duration;
+
+    private Set<Long> likeIds = new HashSet<>();
 }
