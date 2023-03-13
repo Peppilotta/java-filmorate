@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.sevice;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationExceptions;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -21,11 +22,14 @@ public class FilmService {
     private static final LocalDate DATE_OF_FIRST_FILM = LocalDate.parse("28.12.1895",
             DateTimeFormatter.ofPattern("dd.MM.yyyy"));
 
+    @Qualifier("filmDbStorage")
     private final FilmStorage filmStorage;
+    @Qualifier("userDbStorage")
     private final UserStorage userStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       @Qualifier("userDbStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
         this.userStorage = userStorage;
     }
@@ -60,14 +64,18 @@ public class FilmService {
         Set<Long> likes = film.getLikeIds();
         likes.add(userId);
         film.setLikeIds(likes);
+        filmStorage.update(film);
     }
 
     public void deleteLike(long filmId, long userId) {
         log.info("Delete like for film id={} from user id={}", filmId, userId);
         filmStorage.containsFilm(filmId);
         userStorage.containsUser(userId);
-        Set<Long> likes = filmStorage.getFilm(filmId).getLikeIds();
+        Film film = filmStorage.getFilm(filmId);
+        Set<Long> likes = film.getLikeIds();
         likes.remove(userId);
+        film.setLikeIds(likes);
+        filmStorage.update(film);
     }
 
     public List<Film> getCountFavoriteFilms(int count) {

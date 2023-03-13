@@ -38,5 +38,5 @@ public class User {
     @Past(message = "Bad birthday")
     private LocalDate birthday;
 
-    private Set<Long> friendIds = new HashSet<>();
+    private Set<Friendship> friendships = new HashSet<>();
 }

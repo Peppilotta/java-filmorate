@@ -41,4 +41,10 @@ public class Film {
     private long duration;
 
     private Set<Long> likeIds = new HashSet<>();
+
+    @NotNull
+    private int genreId;
+
+    @NotNull
+    private int ratingId;
 }

@@ -2,7 +2,9 @@ package ru.yandex.practicum.filmorate.sevice;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Friendship;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -19,7 +21,7 @@ public class UserService {
     private final UserStorage userStorage;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -49,30 +51,42 @@ public class UserService {
         log.info("Add friend with id={} to user with id={}", friendId, userId);
         userStorage.containsUser(userId);
         userStorage.containsUser(friendId);
-        User user1 = userStorage.getUser(userId);
-        Set<Long> user1Friends = user1.getFriendIds();
-        User user2 = userStorage.getUser(friendId);
-        Set<Long> user2Friends = user2.getFriendIds();
-        user1Friends.add(friendId);
-        user2Friends.add(userId);
-        user1.setFriendIds(user1Friends);
-        user2.setFriendIds(user2Friends);
+        User user = userStorage.getUser(userId);
+        Set<Friendship> userFriends = user.getFriendships();
+        User otherUser = userStorage.getUser(friendId);
+        Set<Friendship> otherUserFriends = otherUser.getFriendships();
+        userFriends.add(new Friendship(friendId,false));
+        otherUserFriends.add(new Friendship(userId,false));
+        user.setFriendships(userFriends);
+        otherUser.setFriendships(otherUserFriends);
+        userStorage.update(user);
+        userStorage.update(otherUser);
     }
 
     public void deleteFriend(long userId, long friendId) {
         log.info("Remove friend with id={} for user with id={}", friendId, userId);
         userStorage.containsUser(userId);
         userStorage.containsUser(friendId);
-        Set<Long> user1Friends = userStorage.getUser(userId).getFriendIds();
-        Set<Long> user2Friends = userStorage.getUser(friendId).getFriendIds();
-        user1Friends.remove(friendId);
-        user2Friends.remove(userId);
+        User user = userStorage.getUser(userId);
+        User otherUser = userStorage.getUser(friendId);
+        Set<Friendship> userFriends = user.getFriendships();
+        Set<Friendship> otherUserFriends = otherUser.getFriendships();
+        user.setFriendships(
+                userFriends.stream()
+                .filter(f -> !Objects.equals(f.getFriendId(),friendId))
+                .collect(Collectors.toSet()));
+        otherUser.setFriendships(
+                otherUserFriends.stream()
+                .filter(f -> !Objects.equals(f.getFriendId(),userId))
+                .collect(Collectors.toSet()));
+        userStorage.update(user);
+        userStorage.update(otherUser);
     }
 
     public List<User> getFriends(long userId) {
         log.info("Get list friends of user with id={}", userId);
         userStorage.containsUser(userId);
-        Set<Long> userFriends = userStorage.getUser(userId).getFriendIds();
+        Set<Long> userFriends = collectFriendsIds(userId);
         List<User> allUsers = userStorage.getUsers();
         if (userFriends.isEmpty()) {
             return new ArrayList<>();
@@ -82,16 +96,21 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    private Set<Long> collectFriendsIds(long  id) {
+        return userStorage.getUser(id).getFriendships()
+                .stream()
+                .map(Friendship::getFriendId)
+                .collect(Collectors.toSet());
+    }
+
     public List<User> getCommonFriends(long userId, long otherUserId) {
         log.info("Get request for common list of friends of user with id={} and user with id={} "
                 , userId, otherUserId);
         userStorage.containsUser(userId);
         userStorage.containsUser(otherUserId);
-        Set<Long> userFriendIds = userStorage.getUser(userId).getFriendIds();
-        Set<Long> otherUserFriendIds = userStorage.getUser(otherUserId).getFriendIds();
-        Set<Long> cross = userFriendIds
+        Set<Long> cross = collectFriendsIds(userId)
                 .stream()
-                .filter(otherUserFriendIds::contains)
+                .filter(collectFriendsIds(otherUserId)::contains)
                 .collect(Collectors.toSet());
         if (cross.isEmpty()) {
             return new ArrayList<>();

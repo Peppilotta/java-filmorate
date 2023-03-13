@@ -20,5 +20,5 @@ public class Friendship {
     @Positive
     private long friendId ;
 
-    private boolean accepted = false;
+    private boolean approval = false;
 }
