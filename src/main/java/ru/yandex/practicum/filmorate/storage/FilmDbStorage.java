@@ -18,7 +18,6 @@ import ru.yandex.practicum.filmorate.model.MpaId;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,7 +35,7 @@ public class FilmDbStorage implements FilmStorage {
     private static final String GET_FILM_ID = "select film_id from Films where film_id=?";
     private static final String GET_FILM_LIKES = "select * from Likes where film_id=? ORDER BY user_id ";
     private static final String GET_FILM_GENRES = "select * from film_genres where film_id=? ";
-    private static final String GET_FILM_MPAS = "select * from film_mpas where film_id=? ORDER BY mpa_id ";
+    private static final String GET_FILM_MPAS = "select * from film_mpas where film_id=? ";
     private static final String GET_GENRES = "select * from Genre ORDER BY genre_id ";
     private static final String GET_GENRE = "select * from Genre where genre_id=?";
     private static final String GET_MPAS = "select * from MPA ORDER BY mpa_id ";
@@ -113,13 +112,13 @@ public class FilmDbStorage implements FilmStorage {
 
     private GenreId mapRowToFilmGenre(ResultSet rs, long rowNum) throws SQLException {
         return GenreId.builder()
-                .id(rs.getInt("genre_id"))
+                .id(rs.getLong("genre_id"))
                 .build();
     }
 
     private MpaId mapRowToFilmMpa(ResultSet rs, long rowNum) throws SQLException {
         return MpaId.builder()
-                .id(rs.getInt("mpa_id"))
+                .id(rs.getLong("mpa_id"))
                 .build();
     }
 
@@ -146,7 +145,11 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     public Optional<MpaId> getFilmMpa(long filmId) {
-        return Optional.of(jdbcTemplate.queryForObject(GET_FILM_MPAS, this::mapRowToFilmMpa, filmId));
+        try {
+            return Optional.of(jdbcTemplate.queryForObject(GET_FILM_MPAS, this::mapRowToFilmMpa, filmId));
+        } catch (EmptyResultDataAccessException e) {
+            throw new MpaDoesNotExistException("MPA for ffilm id=" + filmId + " not exist. ");
+        }
     }
 
     private Optional<Set<Long>> getFilmLikes(long filmId) {
@@ -155,6 +158,24 @@ public class FilmDbStorage implements FilmStorage {
 
     private Optional<Film> getFilmOnly(long filmId) {
         return Optional.of(jdbcTemplate.queryForObject(GET_FILM, this::mapRowToFilm, filmId));
+    }
+
+    private boolean containsMpa(long id) {
+        try {
+            jdbcTemplate.queryForObject(GET_MPA, this::mapRowToMpa, id);
+            return true;
+        } catch (EmptyResultDataAccessException e) {
+            throw new MpaDoesNotExistException("MPA with id=" + id + " not exist. ");
+        }
+    }
+
+    private boolean containsGenre(long id) {
+        try {
+            jdbcTemplate.queryForObject(GET_GENRE, this::mapRowToGenre, id);
+            return true;
+        } catch (EmptyResultDataAccessException e) {
+            throw new GenreDoesNotExistException("Genre with id=" + id + " not exist. ");
+        }
     }
 
     @Override
@@ -208,8 +229,8 @@ public class FilmDbStorage implements FilmStorage {
     }
 
     private boolean updateFilmMpa(MpaId mpa, long filmId) {
-        return saveFilmMpa(FilmMpa
-                .builder()
+        containsMpa(mpa.getId());
+        return saveFilmMpa(FilmMpa.builder()
                 .filmId(filmId)
                 .mpaId(mpa.getId())
                 .build()) > 0;
@@ -218,6 +239,7 @@ public class FilmDbStorage implements FilmStorage {
     private boolean updateFilmGenres(Set<GenreId> genres, long filmId) {
         long count = 0;
         for (GenreId genre : genres) {
+            containsGenre(genre.getId());
             count += saveFilmGenre(FilmGenre
                     .builder()
                     .filmId(filmId)
@@ -289,11 +311,19 @@ public class FilmDbStorage implements FilmStorage {
         return mpas.get();
     }
 
+    private Set<GenreId> removeDoubles(Set<GenreId> genres) {
+        Set<Long> genreIds = genres.stream().map(g -> g.getId()).collect(Collectors.toSet());
+        return genreIds.stream().map(g -> GenreId.builder().id(g).build()).collect(Collectors.toSet());
+    }
+
     @Override
     public Film create(Film film) {
         film.setId(saveFilm(film));
         updateFilmMpa(film.getMpa(), film.getId());
-        updateFilmGenres(film.getGenres(), film.getId());
+        Set<GenreId> genres = film.getGenres();
+        if (!genres.isEmpty()) {
+            updateFilmGenres(removeDoubles(genres), film.getId());
+        }
         return film;
     }
 
@@ -337,43 +367,18 @@ public class FilmDbStorage implements FilmStorage {
                 film.getDescription(), film.getDuration(), film.getRate(), filmId);
         MpaId mpaIdBefore = getFilmMpa(filmId).get();
         MpaId mpaIdAfter = film.getMpa();
+        System.out.println("mpaIdBefore " + mpaIdBefore + " mpaIdAfter " + mpaIdAfter);
         if (!Objects.equals(mpaIdAfter, mpaIdBefore)) {
             deleteFilmMpa(mpaIdBefore, filmId);
             updateFilmMpa(mpaIdAfter, filmId);
         }
         Set<GenreId> genresBefore = getFilmGenres(filmId).get();
-        Set<GenreId> genresAfter = film.getGenres();
-        int beforeNum = 0;
-        int afterNum = 0;
+        Set<GenreId> genresAfter = removeDoubles(film.getGenres());
         if (!genresBefore.isEmpty()) {
-            beforeNum += 1;
+            deleteFilmGenres(genresBefore, filmId);
         }
         if (!genresAfter.isEmpty()) {
-            afterNum += 2;
-        }
-
-        switch (beforeNum + afterNum) {
-            case 1:
-                deleteFilmGenres(genresBefore, filmId);
-                break;
-            case 2:
-                updateFilmGenres(genresAfter, filmId);
-                break;
-            case 3:
-                Set<GenreId> genresForDelete = genresBefore
-                        .stream()
-                        .filter(g -> !genresAfter.contains(g))
-                        .collect(Collectors.toSet());
-                Set<GenreId> genresForUpdate = genresAfter
-                        .stream()
-                        .filter(g -> !genresBefore.contains(g))
-                        .collect(Collectors.toSet());
-                if (!genresForDelete.isEmpty()) {
-                    deleteFilmGenres(genresForDelete, filmId);
-                }
-                if (!genresForUpdate.isEmpty()) {
-                    updateFilmGenres(genresForUpdate, filmId);
-                }
+            updateFilmGenres(genresAfter, filmId);
         }
         return getFilm(filmId);
     }

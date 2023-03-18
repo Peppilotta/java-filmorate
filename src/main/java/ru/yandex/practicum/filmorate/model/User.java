@@ -40,7 +40,7 @@ public class User {
     @Past(message = "Bad birthday")
     private LocalDate birthday;
 
-    private Set<Friendship> friendships = new HashSet<>();
+    private Set<Friend> friends = new HashSet<>();
 
     public Map<String, Object> toMap() {
         Map<String, Object> meaning = new HashMap<>();

@@ -58,32 +58,32 @@ public class FilmController {
     }
 
     @GetMapping("/films/{id}")
-    public Film getFilm(@PathVariable @Positive long id) {
+    public Film getFilm(@PathVariable long id) {
         return filmService.getFilm(id);
     }
 
     @GetMapping("/genres/{id}")
-    public Genre getGenre(@PathVariable @Positive int id) {
+    public Genre getGenre(@PathVariable int id) {
         return filmService.getGenre(id);
     }
 
     @GetMapping("/mpa/{id}")
-    public Mpa getMpa(@PathVariable @Positive int id) {
+    public Mpa getMpa(@PathVariable int id) {
         return filmService.getMpa(id);
     }
 
     @PutMapping("/films/{id}/like/{userId}")
-    public void addLike(@PathVariable @Positive long id, @PathVariable @Positive long userId) {
+    public void addLike(@PathVariable long id, @PathVariable long userId) {
         filmService.addLike(id, userId);
     }
 
     @DeleteMapping("/films/{id}/like/{userId}")
-    public void deleteLike(@PathVariable @Positive long id, @PathVariable @Positive long userId) {
+    public void deleteLike(@PathVariable long id, @PathVariable long userId) {
         filmService.deleteLike(id, userId);
     }
 
     @GetMapping("/films/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") @PositiveOrZero int count) {
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10")  int count) {
         return filmService.getCountFavoriteFilms(count);
     }
 }

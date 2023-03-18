@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exception.FilmDoesNotExistException;
 import ru.yandex.practicum.filmorate.exception.FriendsDoesNotExistException;
 import ru.yandex.practicum.filmorate.exception.GenreDoesNotExistException;
@@ -14,7 +15,7 @@ import ru.yandex.practicum.filmorate.exception.UserDoesNotExistException;
 
 import java.util.Map;
 
-@ControllerAdvice
+@RestControllerAdvice
 @Slf4j
 public class ExceptionController {
 

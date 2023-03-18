@@ -25203,3 +25203,7 @@ DELETE FROM likes where film_id=? and mpa_id=? [42122-212]
 	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
 	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
 	at java.base/java.lang.Thread.run(Thread.java:829)
+2023-03-18 12:45:12 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLDataException: Значение слишком длинное для поля "DESCRIPTION CHARACTER VARYING(200)": "U&'\\041f\\044f\\0442\\0435\\0440\\043e \\0434\\0440\\0443\\0437\\0435\\0439 ( \\043a\\043e\\04... (243)"
+Value too long for column "DESCRIPTION CHARACTER VARYING(200)": "U&'\\041f\\044f\\0442\\0435\\0440\\043e \\0434\\0440\\0443\\0437\\0435\\0439 ( \\043a\\043e\\04... (243)"; SQL statement:
+INSERT INTO films (FILM_NAME, RELEASE_DATE, DESCRIPTION, DURATION, RATE) VALUES(?, ?, ?, ?, ?) [22001-212]

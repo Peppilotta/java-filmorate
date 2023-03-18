@@ -83,7 +83,7 @@ class UserControllerTest {
 
     @Test
     void validate_BadReleaseDate() {
-        User user = new User();
+        User user = new User(getUser(userId));
         user.setEmail("email@mail.ru");
         user.setLogin("Fet");
         user.setBirthday(LocalDate.parse("28.12.2025",
