@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.validation.constraints.Positive;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,21 +18,17 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Friendship {
+public class Mpa {
 
-    @Positive
-    private long userId;
+    @PositiveOrZero
+    private long id;
 
-    @Positive
-    private long friendId;
-
-    private boolean approval = false;
+    @NotBlank(message = "Wrong name")
+    private String name;
 
     public Map<String, Object> toMap() {
         Map<String, Object> meaning = new HashMap<>();
-        meaning.put("user_id", userId);
-        meaning.put("friend_id", friendId);
-        meaning.put("approval", approval);
+        meaning.put("mpa_name", name);
         return meaning;
     }
 }

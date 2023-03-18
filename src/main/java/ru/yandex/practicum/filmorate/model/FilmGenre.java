@@ -17,21 +17,18 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Friendship {
+public class FilmGenre {
 
     @Positive
-    private long userId;
+    long filmId;
 
     @Positive
-    private long friendId;
-
-    private boolean approval = false;
+    long genreId;
 
     public Map<String, Object> toMap() {
         Map<String, Object> meaning = new HashMap<>();
-        meaning.put("user_id", userId);
-        meaning.put("friend_id", friendId);
-        meaning.put("approval", approval);
+        meaning.put("film_id", filmId);
+        meaning.put("genre_id", genreId);
         return meaning;
     }
 }

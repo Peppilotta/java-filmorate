@@ -12,7 +12,9 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -39,4 +41,13 @@ public class User {
     private LocalDate birthday;
 
     private Set<Friendship> friendships = new HashSet<>();
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> meaning = new HashMap<>();
+        meaning.put("login", login);
+        meaning.put("user_name", name);
+        meaning.put("email", email);
+        meaning.put("birthday", birthday);
+        return meaning;
+    }
 }
