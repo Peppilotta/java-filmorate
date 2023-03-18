@@ -55,10 +55,9 @@ public class InMemoryUserStorage implements UserStorage {
         return true;
     }
 
-    public boolean addFriend(long userId, long friendId) {
-        return true;
+    public User addFriend(long userId, long friendId) {
+        return new User();
     }
-
 
     @Override
     public List<User> getCommonFriends(long userId, long otherUserId) {
@@ -71,7 +70,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public boolean deleteFriend(long userId, long friendId) {
-        return true;
+    public User deleteFriend(long userId, long friendId) {
+        return new User();
     }
 }

@@ -30,5 +30,4 @@ public class Friend {
         meaning.put("approval", approval);
         return meaning;
     }
-
 }

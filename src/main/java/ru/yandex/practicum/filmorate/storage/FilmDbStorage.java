@@ -11,13 +11,12 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmGenre;
 import ru.yandex.practicum.filmorate.model.FilmMpa;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.GenreId;
 import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.MpaId;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,12 +29,19 @@ import java.util.stream.Collectors;
 public class FilmDbStorage implements FilmStorage {
 
     private static final String GET_FILMS = "select * from Films ORDER BY film_id ";
-    private static final String GET_BEST_FILMS = "select * from Films ORDER BY rate desc limit ?";
+    private static final String GET_BEST_FILMS =
+            "select f.film_id, f.film_name, f.release_date, f.description, " +
+                    "f.duration, f.rate, count(l.user_id) as likes" +
+                    " from Films f left join likes l on f.film_id = l.film_id" +
+                    "  group by f.film_id ORDER BY likes desc limit ?";
     private static final String GET_FILM = "select * from Films where film_id=?";
     private static final String GET_FILM_ID = "select film_id from Films where film_id=?";
     private static final String GET_FILM_LIKES = "select * from Likes where film_id=? ORDER BY user_id ";
-    private static final String GET_FILM_GENRES = "select * from film_genres where film_id=? ";
-    private static final String GET_FILM_MPAS = "select * from film_mpas where film_id=? ";
+    private static final String GET_FILM_GENRES =
+            "select f.genre_id, g.genre_name from film_genres f " +
+                    "right join genre g on f.genre_id = g.genre_id where film_id=? ";
+    private static final String GET_FILM_MPAS =
+            "select f.mpa_id, m.mpa_name from film_mpas f right join mpa m on f.mpa_id = m.mpa_id where f.film_id=? ";
     private static final String GET_GENRES = "select * from Genre ORDER BY genre_id ";
     private static final String GET_GENRE = "select * from Genre where genre_id=?";
     private static final String GET_MPAS = "select * from MPA ORDER BY mpa_id ";
@@ -43,7 +49,6 @@ public class FilmDbStorage implements FilmStorage {
 
     private static final String UPDATE_FILM = "update Films set film_name=?, release_date=?, " +
             "description=?, duration=?, rate=? where film_id=? ";
-    private static final String UPDATE_FILM_RATE = "update Films set rate=? where film_id=? ";
     private static final String DELETE_LIKE = "DELETE FROM likes where film_id=? and user_id=? ";
     private static final String DELETE_FILM_GENRE = "DELETE FROM film_genres where film_id=? and genre_id=? ";
     private static final String DELETE_FILM_MPA = "DELETE FROM film_mpas where film_id=? and mpa_id=? ";
@@ -51,6 +56,111 @@ public class FilmDbStorage implements FilmStorage {
 
     public FilmDbStorage(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Override
+    public Film getFilm(long id) {
+        containsFilm(id);
+        Film filmOut = getFilmOnly(id).get();
+        getFilmGenres(id).ifPresent(filmOut::setGenres);
+        getFilmMpa(id).ifPresent(filmOut::setMpa);
+        return filmOut;
+    }
+
+    @Override
+    public List<Film> getFilms() {
+        return getSomeFilms(getFilmsOnly());
+    }
+
+    @Override
+    public Genre getGenre(long id) {
+        return getGenreOnly(id).get();
+    }
+
+    @Override
+    public Set<Genre> getGenres() {
+        return getGenresOnly().get();
+    }
+
+    @Override
+    public Mpa getMpa(long id) {
+        return getMpaOnly(id).get();
+    }
+
+    @Override
+    public Set<Mpa> getMpas() {
+        return getMpasOnly().get();
+    }
+
+    @Override
+    public Film create(Film film) {
+        film.setId(saveFilm(film));
+        Mpa mpa = film.getMpa();
+        film.setMpa(getMpa(mpa.getId()));
+        updateFilmMpa(film.getMpa(), film.getId());
+        Set<Genre> genres = film.getGenres();
+        if (!genres.isEmpty()) {
+            updateFilmGenres(removeDoubles(genres), film.getId());
+        }
+        return film;
+    }
+
+    @Override
+    public boolean addLike(long filmId, long userId) {
+        Optional<Film> film = getFilmOnly(filmId);
+        if (film.isEmpty()) {
+            throw new FilmDoesNotExistException("Film with id=" + film + " not exist. ");
+        }
+        long likeCreated = saveLike(new Like(filmId, userId));
+        return likeCreated > 0;
+    }
+
+    @Override
+    public boolean deleteLike(long filmId, long userId) {
+        Optional<Film> film = getFilmOnly(filmId);
+        if (film.isEmpty()) {
+            throw new FilmDoesNotExistException("Film with id=" + film + " not exist. ");
+        }
+        long likeDeleted = jdbcTemplate.update(DELETE_LIKE, filmId, userId);
+        Optional<Set<Long>> likes = getFilmLikes(filmId);
+        if (likes.isPresent()) {
+            likes.get().size();
+        }
+        return likeDeleted > 0;
+    }
+
+    @Override
+    public Film update(Film film) {
+        long filmId = film.getId();
+        containsFilm(filmId);
+        jdbcTemplate.update(UPDATE_FILM, film.getName(), film.getReleaseDate(),
+                film.getDescription(), film.getDuration(), film.getRate(), filmId);
+        Mpa mpaBefore = getFilmMpa(filmId).get();
+        Mpa mpaAfter = film.getMpa();
+        film.setMpa(getMpa(mpaAfter.getId()));
+        if (!Objects.equals(mpaAfter, mpaBefore)) {
+            deleteFilmMpa(mpaBefore, filmId);
+            updateFilmMpa(mpaAfter, filmId);
+        }
+        Set<Genre> genresBefore = getFilmGenres(filmId).get();
+        Set<Genre> genresAfter = removeDoubles(film.getGenres());
+        if (!genresBefore.isEmpty()) {
+            deleteFilmGenres(genresBefore, filmId);
+        }
+        if (!genresAfter.isEmpty()) {
+            updateFilmGenres(genresAfter, filmId);
+        }
+        return getFilm(filmId);
+    }
+
+    @Override
+    public boolean containsFilm(long filmId) {
+        try {
+            jdbcTemplate.queryForObject(GET_FILM_ID, this::mapRowToFilmId, filmId);
+            return true;
+        } catch (EmptyResultDataAccessException e) {
+            throw new FilmDoesNotExistException("Film with id=" + filmId + " not exist. ");
+        }
     }
 
     private long saveFilm(Film film) {
@@ -110,15 +220,17 @@ public class FilmDbStorage implements FilmStorage {
         return rs.getLong("film_id");
     }
 
-    private GenreId mapRowToFilmGenre(ResultSet rs, long rowNum) throws SQLException {
-        return GenreId.builder()
+    private Genre mapRowToFilmGenre(ResultSet rs, long rowNum) throws SQLException {
+        return Genre.builder()
                 .id(rs.getLong("genre_id"))
+                .name(rs.getString("genre_name"))
                 .build();
     }
 
-    private MpaId mapRowToFilmMpa(ResultSet rs, long rowNum) throws SQLException {
-        return MpaId.builder()
+    private Mpa mapRowToFilmMpa(ResultSet rs, long rowNum) throws SQLException {
+        return Mpa.builder()
                 .id(rs.getLong("mpa_id"))
+                .name(rs.getString("mpa_name"))
                 .build();
     }
 
@@ -140,11 +252,15 @@ public class FilmDbStorage implements FilmStorage {
                 .build();
     }
 
-    public Optional<Set<GenreId>> getFilmGenres(long filmId) {
+    public List<Film> getFavoriteFilms(int count) {
+        return getSomeFilms(getBestFilmsOnly(count));
+    }
+
+    public Optional<Set<Genre>> getFilmGenres(long filmId) {
         return Optional.of(new LinkedHashSet<>(jdbcTemplate.query(GET_FILM_GENRES, this::mapRowToFilmGenre, filmId)));
     }
 
-    public Optional<MpaId> getFilmMpa(long filmId) {
+    public Optional<Mpa> getFilmMpa(long filmId) {
         try {
             return Optional.of(jdbcTemplate.queryForObject(GET_FILM_MPAS, this::mapRowToFilmMpa, filmId));
         } catch (EmptyResultDataAccessException e) {
@@ -178,16 +294,6 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
-    @Override
-    public boolean containsFilm(long filmId) {
-        try {
-            jdbcTemplate.queryForObject(GET_FILM_ID, this::mapRowToFilmId, filmId);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            throw new FilmDoesNotExistException("Film with id=" + filmId + " not exist. ");
-        }
-    }
-
     private Optional<List<Film>> getFilmsOnly() {
         try {
             return Optional.of(new LinkedList<>(jdbcTemplate.query(GET_FILMS, this::mapRowToFilm)));
@@ -212,6 +318,26 @@ public class FilmDbStorage implements FilmStorage {
         }
     }
 
+    private List<Film> getSomeFilms(Optional<List<Film>> films) {
+        if (films.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<Film> filmsOut = films.get();
+        filmsOut.forEach(f -> {
+            long id = f.getId();
+            Optional<Set<Genre>> genres = getFilmGenres(id);
+            genres.ifPresent(f::setGenres);
+            Optional<Mpa> mpa = getFilmMpa(id);
+            mpa.ifPresent(f::setMpa);
+        });
+        return filmsOut;
+    }
+
+    private Set<Genre> removeDoubles(Set<Genre> genres) {
+        Set<Long> genreIds = genres.stream().map(Genre::getId).collect(Collectors.toSet());
+        return genreIds.stream().map(this::getGenre).collect(Collectors.toSet());
+    }
+
     private Optional<Mpa> getMpaOnly(long id) {
         try {
             return Optional.of(jdbcTemplate.queryForObject(GET_MPA, this::mapRowToMpa, id));
@@ -228,7 +354,7 @@ public class FilmDbStorage implements FilmStorage {
         return Optional.of(new LinkedHashSet<>(jdbcTemplate.query(GET_MPAS, this::mapRowToMpa)));
     }
 
-    private boolean updateFilmMpa(MpaId mpa, long filmId) {
+    private boolean updateFilmMpa(Mpa mpa, long filmId) {
         containsMpa(mpa.getId());
         return saveFilmMpa(FilmMpa.builder()
                 .filmId(filmId)
@@ -236,9 +362,9 @@ public class FilmDbStorage implements FilmStorage {
                 .build()) > 0;
     }
 
-    private boolean updateFilmGenres(Set<GenreId> genres, long filmId) {
+    private boolean updateFilmGenres(Set<Genre> genres, long filmId) {
         long count = 0;
-        for (GenreId genre : genres) {
+        for (Genre genre : genres) {
             containsGenre(genre.getId());
             count += saveFilmGenre(FilmGenre
                     .builder()
@@ -249,141 +375,15 @@ public class FilmDbStorage implements FilmStorage {
         return count == genres.size();
     }
 
-    private boolean deleteFilmMpa(MpaId mpa, long filmId) {
+    private boolean deleteFilmMpa(Mpa mpa, long filmId) {
         return jdbcTemplate.update(DELETE_FILM_MPA, filmId, mpa.getId()) > 0;
     }
 
-    private boolean deleteFilmGenres(Set<GenreId> genres, long filmId) {
+    private boolean deleteFilmGenres(Set<Genre> genres, long filmId) {
         long count = 0;
-        for (GenreId genre : genres) {
+        for (Genre genre : genres) {
             count += jdbcTemplate.update(DELETE_FILM_GENRE, filmId, genre.getId());
         }
         return count == genres.size();
-    }
-
-    @Override
-    public Film getFilm(long id) {
-        containsFilm(id);
-        Film filmOut = getFilmOnly(id).get();
-        getFilmGenres(id).ifPresent(filmOut::setGenres);
-        getFilmMpa(id).ifPresent(filmOut::setMpa);
-        return filmOut;
-    }
-
-    @Override
-    public List<Film> getFilms() {
-        return getSomeFilms(getFilmsOnly());
-    }
-
-    public List<Film> getSomeFilms(Optional<List<Film>> films) {
-        List<Film> filmsOut = films.get();
-        filmsOut.forEach(f -> {
-            long id = f.getId();
-            Optional<Set<GenreId>> genres = getFilmGenres(id);
-            genres.ifPresent(f::setGenres);
-            Optional<MpaId> mpa = getFilmMpa(id);
-            mpa.ifPresent(f::setMpa);
-        });
-        return filmsOut;
-    }
-
-    @Override
-    public Genre getGenre(long id) {
-        return getGenreOnly(id).get();
-    }
-
-    @Override
-    public Set<Genre> getGenres() {
-        return getGenresOnly().get();
-    }
-
-    @Override
-    public Mpa getMpa(long id) {
-        return getMpaOnly(id).get();
-    }
-
-    @Override
-    public Set<Mpa> getMpas() {
-        Optional<Set<Mpa>> mpas = getMpasOnly();
-        if (mpas.isEmpty()) {
-            return new LinkedHashSet<>();
-        }
-        return mpas.get();
-    }
-
-    private Set<GenreId> removeDoubles(Set<GenreId> genres) {
-        Set<Long> genreIds = genres.stream().map(g -> g.getId()).collect(Collectors.toSet());
-        return genreIds.stream().map(g -> GenreId.builder().id(g).build()).collect(Collectors.toSet());
-    }
-
-    @Override
-    public Film create(Film film) {
-        film.setId(saveFilm(film));
-        updateFilmMpa(film.getMpa(), film.getId());
-        Set<GenreId> genres = film.getGenres();
-        if (!genres.isEmpty()) {
-            updateFilmGenres(removeDoubles(genres), film.getId());
-        }
-        return film;
-    }
-
-    @Override
-    public boolean addLike(long filmId, long userId) {
-        Optional<Film> film = getFilmOnly(filmId);
-        if (film.isEmpty()) {
-            throw new FilmDoesNotExistException("Film with id=" + film + " not exist. ");
-        }
-        long likeCreated = saveLike(new Like(filmId, userId));
-        Optional<Set<Long>> likes = getFilmLikes(filmId);
-        long count = 1;
-        if (likes.isPresent()) {
-            count += likes.get().size();
-        }
-        long filmUpdated = jdbcTemplate.update(UPDATE_FILM_RATE, count, filmId);
-        return filmUpdated > 0 && likeCreated > 0;
-    }
-
-    @Override
-    public boolean deleteLike(long filmId, long userId) {
-        Optional<Film> film = getFilmOnly(filmId);
-        if (film.isEmpty()) {
-            throw new FilmDoesNotExistException("Film with id=" + film + " not exist. ");
-        }
-        long likeDeleted = jdbcTemplate.update(DELETE_LIKE, filmId, userId);
-        long countLikes = 0;
-        Optional<Set<Long>> likes = getFilmLikes(filmId);
-        if (likes.isPresent()) {
-            countLikes += likes.get().size();
-        }
-        long filmUpdated = jdbcTemplate.update(UPDATE_FILM_RATE, countLikes, filmId);
-        return filmUpdated > 0 && likeDeleted > 0;
-    }
-
-    @Override
-    public Film update(Film film) {
-        long filmId = film.getId();
-        containsFilm(filmId);
-        jdbcTemplate.update(UPDATE_FILM, film.getName(), film.getReleaseDate(),
-                film.getDescription(), film.getDuration(), film.getRate(), filmId);
-        MpaId mpaIdBefore = getFilmMpa(filmId).get();
-        MpaId mpaIdAfter = film.getMpa();
-        System.out.println("mpaIdBefore " + mpaIdBefore + " mpaIdAfter " + mpaIdAfter);
-        if (!Objects.equals(mpaIdAfter, mpaIdBefore)) {
-            deleteFilmMpa(mpaIdBefore, filmId);
-            updateFilmMpa(mpaIdAfter, filmId);
-        }
-        Set<GenreId> genresBefore = getFilmGenres(filmId).get();
-        Set<GenreId> genresAfter = removeDoubles(film.getGenres());
-        if (!genresBefore.isEmpty()) {
-            deleteFilmGenres(genresBefore, filmId);
-        }
-        if (!genresAfter.isEmpty()) {
-            updateFilmGenres(genresAfter, filmId);
-        }
-        return getFilm(filmId);
-    }
-
-    public List<Film> getFavoriteFilms(int count) {
-        return getSomeFilms(getBestFilmsOnly(count));
     }
 }

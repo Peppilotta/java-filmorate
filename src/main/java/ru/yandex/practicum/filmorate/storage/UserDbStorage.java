@@ -43,6 +43,119 @@ public class UserDbStorage implements UserStorage {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Override
+    public User create(User user) {
+        long userId = saveUser(user);
+        Set<Friend> friends = user.getFriends();
+        if (!friends.isEmpty()) {
+            updateFriends(friends, userId);
+        }
+        return getUser(userId);
+    }
+
+    @Override
+    public User update(User user) {
+        long userId = user.getId();
+        containsUser(userId);
+        jdbcTemplate.update(UPDATE_USER, user.getName(), user.getLogin(),
+                user.getEmail(), user.getBirthday(), userId);
+        deleteFriends(getFriendships(userId).get(), userId);
+        updateFriends(user.getFriends(), userId);
+        return getUser(userId);
+    }
+
+    @Override
+    public List<User> getUsers() {
+        return getSomeUsers(getUsersOnly());
+    }
+
+    @Override
+    public User getUser(long id) {
+        Optional<User> user = getUserOnly(id);
+        User userOut = user.get();
+        Optional<Set<Friend>> friends = getFriendships(id);
+        friends.ifPresent(userOut::setFriends);
+        return userOut;
+    }
+
+    @Override
+    public User addFriend(long userId, long friendId) {
+        containsUser(userId);
+        containsUser(friendId);
+        if (userId == friendId) {
+            throw new UserDoesNotExistException(" ids are equals. ");
+        }
+        User user = getUser(userId);
+        Friend userToOtherUser = Friend.builder()
+                .friendId(friendId)
+                .approval(false)
+                .build();
+        Set<Friend> userFriends = user.getFriends();
+        userFriends.add(userToOtherUser);
+        update(user);
+        return user;
+    }
+
+    @Override
+    public User deleteFriend(long userId, long friendId) {
+        containsUser(userId);
+        containsUser(friendId);
+        if (userId == friendId) {
+            throw new UserDoesNotExistException(" ids are equals. ");
+        }
+        User user = getUser(userId);
+        Set<Friend> friends = user.getFriends();
+        for (Friend friend : friends) {
+            if (Objects.equals(friend.getFriendId(), friendId)) {
+                friends.remove(friend);
+            }
+        }
+        update(user);
+        return user;
+    }
+
+    @Override
+    public List<User> getCommonFriends(long userId, long otherUserId) {
+        containsUser(userId);
+        containsUser(otherUserId);
+        if (userId == otherUserId) {
+            throw new UserDoesNotExistException(" ids are equals. ");
+        }
+        return getSomeUsers(getCommonFriendsAsUser(userId, otherUserId));
+    }
+
+    public List<User> getSomeUsers(Optional<List<User>> users) {
+        if (users.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<User> usersOut = users.get();
+        usersOut.forEach(f -> {
+            long id = f.getId();
+            Optional<Set<Friend>> friends = getFriendships(id);
+            friends.ifPresent(f::setFriends);
+        });
+        return usersOut;
+    }
+
+    @Override
+    public List<User> getFriends(long userId) {
+        containsUser(userId);
+        return getSomeUsers(getFriendsAsUser(userId));
+    }
+
+    @Override
+    public boolean containsUser(long userId) {
+        if (userId < 0) {
+            throw new UserDoesNotExistException("User id mast be positive");
+        }
+        try {
+            SqlRowSet resultSet = jdbcTemplate.queryForRowSet(GET_USER_ID, userId);
+            return true;
+        } catch (EmptyResultDataAccessException e) {
+            throw new UserDoesNotExistException("User with id=" + userId + " not exist. ");
+        }
+    }
+
     private long saveUser(User user) {
         SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("users")
@@ -101,24 +214,6 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    public boolean notContainsFriend(long userId, long friendId) {
-        SqlRowSet friendRow = jdbcTemplate.queryForRowSet(GET_USER_FRIEND, userId, friendId);
-        return Objects.isNull(friendRow);
-    }
-
-    @Override
-    public boolean containsUser(long userId) {
-        if (userId < 0) {
-            throw new UserDoesNotExistException("User id mast be positive");
-        }
-        try {
-            SqlRowSet resultSet = jdbcTemplate.queryForRowSet(GET_USER_ID, userId);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            throw new UserDoesNotExistException("User with id=" + userId + " not exist. ");
-        }
-    }
-
     private boolean updateFriends(Set<Friend> friends, long userId) {
         long count = 0;
         for (Friend friend : friends) {
@@ -138,104 +233,5 @@ public class UserDbStorage implements UserStorage {
         }
         return count == friends.size();
     }
-
-    @Override
-    public User create(User user) {
-        long userId = saveUser(user);
-        Set<Friend> friends = user.getFriends();
-        if (!friends.isEmpty()) {
-            updateFriends(friends, userId);
-        }
-        return getUser(userId);
-    }
-
-    @Override
-    public User update(User user) {
-        long userId = user.getId();
-        containsUser(userId);
-        jdbcTemplate.update(UPDATE_USER, user.getName(), user.getLogin(),
-                user.getEmail(), user.getBirthday(), userId);
-        deleteFriends(getFriendships(userId).get(), userId);
-        updateFriends(user.getFriends(), userId);
-        return getUser(userId);
-    }
-
-    @Override
-    public List<User> getUsers() {
-        return getSomeUsers(getUsersOnly());
-    }
-
-    @Override
-    public User getUser(long id) {
-        Optional<User> user = getUserOnly(id);
-        User userOut = user.get();
-        Optional<Set<Friend>> friends = getFriendships(id);
-        friends.ifPresent(userOut::setFriends);
-        return userOut;
-    }
-
-    @Override
-    public boolean addFriend(long userId, long friendId) {
-        containsUser(userId);
-        containsUser(friendId);
-        if (userId == friendId) {
-            throw new UserDoesNotExistException(" ids are equals. ");
-        }
-        User user = getUser(userId);
-        Friend userToOtherUser = Friend.builder()
-                .friendId(friendId)
-                .approval(false)
-                .build();
-        Set<Friend> userFriends = user.getFriends();
-        userFriends.add(userToOtherUser);
-        update(user);
-        return true;
-    }
-
-    @Override
-    public boolean deleteFriend(long userId, long friendId) {
-        containsUser(userId);
-        containsUser(friendId);
-        if (userId == friendId) {
-            throw new UserDoesNotExistException(" ids are equals. ");
-        }
-        User user = getUser(userId);
-        Set<Friend> friends = user.getFriends();
-        for (Friend friend : friends) {
-            if (Objects.equals(friend.getFriendId(), friendId)) {
-                friends.remove(friend);
-            }
-        }
-        update(user);
-        return true;
-    }
-
-    @Override
-    public List<User> getCommonFriends(long userId, long otherUserId) {
-        containsUser(userId);
-        containsUser(otherUserId);
-        if (userId == otherUserId) {
-            throw new UserDoesNotExistException(" ids are equals. ");
-        }
-        return getSomeUsers(getCommonFriendsAsUser(userId, otherUserId));
-    }
-
-    public List<User> getSomeUsers(Optional<List<User>> users) {
-        if (users.isEmpty()) {
-            return new ArrayList<>();
-        }
-        List<User> usersOut = users.get();
-        usersOut.forEach(f -> {
-            long id = f.getId();
-            Optional<Set<Friend>> friends = getFriendships(id);
-            friends.ifPresent(f::setFriends);
-        });
-        return usersOut;
-    }
-
-    @Override
-    public List<User> getFriends(long userId) {
-        containsUser(userId);
-        return getSomeUsers(getFriendsAsUser(userId));
-    }
 }
+

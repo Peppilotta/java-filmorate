@@ -45,9 +45,9 @@ public class Film {
     @PositiveOrZero
     private int rate;
 
-    private Set<GenreId> genres = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
 
-    private MpaId mpa;
+    private Mpa mpa;
 
     public Map<String, Object> toMap() {
         Map<String, Object> meaning = new HashMap<>();

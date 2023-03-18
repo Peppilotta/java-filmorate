@@ -43,18 +43,14 @@ public class UserService {
         return userStorage.getUser(id);
     }
 
-    public void addFriend(long userId, long friendId) {
+    public User addFriend(long userId, long friendId) {
         log.info("Add friend with id={} to user with id={}", friendId, userId);
-        if (userStorage.addFriend(userId, friendId)) {
-            log.info("friend with id={} to user with id={} added and vice versa ", friendId, userId);
-        }
+        return userStorage.addFriend(userId, friendId);
     }
 
-    public void deleteFriend(long userId, long friendId) {
+    public User deleteFriend(long userId, long friendId) {
         log.info("Remove friend with id={} for user with id={}", friendId, userId);
-        if (userStorage.deleteFriend(userId, friendId)) {
-            log.info("friend with id={} for user with id={} removed", friendId, userId);
-        }
+        return userStorage.deleteFriend(userId, friendId);
     }
 
     public List<User> getFriends(long userId) {
