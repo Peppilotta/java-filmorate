@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import java.util.Map;
 @Builder
 public class Genre {
 
-    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Wrong name")

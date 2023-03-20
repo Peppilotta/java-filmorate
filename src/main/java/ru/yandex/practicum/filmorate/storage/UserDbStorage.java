@@ -16,26 +16,31 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 @Component("userDbStorage")
 public class UserDbStorage implements UserStorage {
 
-    private static final String GET_USERS = "select * from Users order by user_id ";
-    private static final String GET_USER = "select * from Users where user_id=?";
-    private static final String GET_USER_ID = "select user_id from Users where user_id=?";
+    private static final String GET_USERS = "SELECT * FROM Users ORDER BY user_id ";
+
+    private static final String GET_USER = "SELECT * FROM Users WHERE user_id=?";
+
+    private static final String GET_USER_ID = "SELECT user_id FROM Users WHERE user_id=?";
+
     private static final String UPDATE_USER =
-            "update Users set user_name=?, login=?, email=?, birthday=? where user_id=? ";
-    private static final String GET_USER_FRIENDS = "select * from Friends where user_id=? order by friend_id ";
-    private static final String GET_USER_FRIEND = "select * from Friends where user_id=? and friend_id=? ";
+            "UPDATE Users SET user_name=?, login=?, email=?, birthday=? where user_id=? ";
+
+    private static final String GET_USER_FRIENDS = "SELECT * FROM Friends WHERE user_id=? ORDER BY friend_id ";
+
     private static final String GET_USER_FRIENDS_AS_USERS =
-            "select * from users where user_id in " +
-                    "(select friend_id from friends where user_id=? order by friend_id) order by user_id";
+            "SELECT * FROM users WHERE user_id IN " +
+                    "(SELECT friend_id FROM friends WHERE user_id=? ORDER BY friend_id) ORDER BY user_id";
+
     private static final String GET_COMMON_FRIENDS_AS_USERS =
-            "select * from users where user_id in (select friend_id from friends where user_id=? and friend_id in " +
-                    "(select friend_id from friends where user_id=?) order by friend_id) order by user_id";
-    private static final String DELETE_FRIENDSHIP = "delete from friends where user_id=? and friend_id=?";
+            "SELECT * FROM users WHERE user_id IN (SELECT friend_id FROM friends WHERE user_id=? AND friend_id IN " +
+                    "(SELECT friend_id FROM friends WHERE user_id=?) ORDER BY friend_id) ORDER BY user_id";
+
+    private static final String DELETE_FRIENDSHIP = "DELETE FROM friends WHERE user_id=? AND friend_id=?";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -56,10 +61,9 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User update(User user) {
         long userId = user.getId();
-        containsUser(userId);
         jdbcTemplate.update(UPDATE_USER, user.getName(), user.getLogin(),
                 user.getEmail(), user.getBirthday(), userId);
-        deleteFriends(getFriendships(userId).get(), userId);
+        deleteFriends(getFriendships(userId), userId);
         updateFriends(user.getFriends(), userId);
         return getUser(userId);
     }
@@ -71,17 +75,13 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User getUser(long id) {
-        Optional<User> user = getUserOnly(id);
-        User userOut = user.get();
-        Optional<Set<Friend>> friends = getFriendships(id);
-        friends.ifPresent(userOut::setFriends);
+        User userOut = getUserOnly(id);
+        userOut.setFriends(getFriendships(id));
         return userOut;
     }
 
     @Override
     public User addFriend(long userId, long friendId) {
-        containsUser(userId);
-        containsUser(friendId);
         if (userId == friendId) {
             throw new UserDoesNotExistException(" ids are equals. ");
         }
@@ -98,8 +98,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User deleteFriend(long userId, long friendId) {
-        containsUser(userId);
-        containsUser(friendId);
         if (userId == friendId) {
             throw new UserDoesNotExistException(" ids are equals. ");
         }
@@ -116,30 +114,25 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getCommonFriends(long userId, long otherUserId) {
-        containsUser(userId);
-        containsUser(otherUserId);
         if (userId == otherUserId) {
             throw new UserDoesNotExistException(" ids are equals. ");
         }
         return getSomeUsers(getCommonFriendsAsUser(userId, otherUserId));
     }
 
-    public List<User> getSomeUsers(Optional<List<User>> users) {
+    public List<User> getSomeUsers(List<User> users) {
         if (users.isEmpty()) {
             return new ArrayList<>();
         }
-        List<User> usersOut = users.get();
-        usersOut.forEach(f -> {
+        users.forEach(f -> {
             long id = f.getId();
-            Optional<Set<Friend>> friends = getFriendships(id);
-            friends.ifPresent(f::setFriends);
+            f.setFriends(getFriendships(id));
         });
-        return usersOut;
+        return users;
     }
 
     @Override
     public List<User> getFriends(long userId) {
-        containsUser(userId);
         return getSomeUsers(getFriendsAsUser(userId));
     }
 
@@ -187,28 +180,27 @@ public class UserDbStorage implements UserStorage {
                 .build();
     }
 
-    private Optional<Set<Friend>> getFriendships(long userId) {
-        return Optional.of(new HashSet<>
-                (jdbcTemplate.query(GET_USER_FRIENDS, this::mapRowToFriendship, userId)));
+    private Set<Friend> getFriendships(long userId) {
+        return new HashSet<>
+                (jdbcTemplate.query(GET_USER_FRIENDS, this::mapRowToFriendship, userId));
     }
 
-    private Optional<List<User>> getUsersOnly() {
-        return Optional.of(new ArrayList<>(jdbcTemplate.query(GET_USERS, this::mapRowToUser)));
+    private List<User> getUsersOnly() {
+        return new ArrayList<>(jdbcTemplate.query(GET_USERS, this::mapRowToUser));
     }
 
-    private Optional<List<User>> getFriendsAsUser(long userId) {
-        return Optional.of(new ArrayList<>
-                (jdbcTemplate.query(GET_USER_FRIENDS_AS_USERS, this::mapRowToUser, userId)));
+    private List<User> getFriendsAsUser(long userId) {
+        return new ArrayList<>(jdbcTemplate.query(GET_USER_FRIENDS_AS_USERS, this::mapRowToUser, userId));
     }
 
-    private Optional<List<User>> getCommonFriendsAsUser(long userId, long otherUserId) {
-        return Optional.of(new ArrayList<>
-                (jdbcTemplate.query(GET_COMMON_FRIENDS_AS_USERS, this::mapRowToUser, userId, otherUserId)));
+    private List<User> getCommonFriendsAsUser(long userId, long otherUserId) {
+        return new ArrayList<>
+                (jdbcTemplate.query(GET_COMMON_FRIENDS_AS_USERS, this::mapRowToUser, userId, otherUserId));
     }
 
-    private Optional<User> getUserOnly(long userId) {
+    private User getUserOnly(long userId) {
         try {
-            return Optional.of(jdbcTemplate.queryForObject(GET_USER, this::mapRowToUser, userId));
+            return jdbcTemplate.queryForObject(GET_USER, this::mapRowToUser, userId);
         } catch (EmptyResultDataAccessException e) {
             throw new UserDoesNotExistException("User with id=" + userId + " not exist. ");
         }

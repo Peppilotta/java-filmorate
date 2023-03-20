@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.exception.LikesDoesNotExistException;
 import ru.yandex.practicum.filmorate.exception.MpaDoesNotExistException;
 import ru.yandex.practicum.filmorate.exception.UserDoesNotExistException;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -20,52 +21,27 @@ public class ExceptionController {
 
     private static final String ERROR = "error";
     private static final String MESSAGE = "message";
+    private final Map<String, String> messages = new HashMap<>(Map.of(
+            "FilmDoesNotExistException", "film id exception",
+            "UserDoesNotExistException", "user id exception",
+            "GenreDoesNotExistException", "genre id exception",
+            "MpaDoesNotExistException", "MPA id exception",
+            "LikesDoesNotExistException", "likes exception",
+            "FriendsDoesNotExistException", "friends exception"
+    ));
 
-    @ExceptionHandler(FilmDoesNotExistException.class)
+    @ExceptionHandler({FilmDoesNotExistException.class,
+            UserDoesNotExistException.class,
+            GenreDoesNotExistException.class,
+            MpaDoesNotExistException.class,
+            LikesDoesNotExistException.class,
+            FriendsDoesNotExistException.class
+    })
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleWrongFilmId(final RuntimeException e) {
-        log.error("Film with this id not exist.", e);
-        return Map.of(ERROR, "film id exception",
-                MESSAGE, e.getMessage());
-    }
-
-    @ExceptionHandler(UserDoesNotExistException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleWrongUserId(final RuntimeException e) {
-        log.error("User with this id not exist.", e);
-        return Map.of(ERROR, "user id exception",
-                MESSAGE, e.getMessage());
-    }
-
-    @ExceptionHandler(GenreDoesNotExistException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleWrongGenreId(final RuntimeException e) {
-        log.error("Genre with this id not exist.", e);
-        return Map.of(ERROR, "genre id exception",
-                MESSAGE, e.getMessage());
-    }
-
-    @ExceptionHandler(MpaDoesNotExistException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleWrongMpaId(final RuntimeException e) {
-        log.error("Mpa with this id not exist.", e);
-        return Map.of(ERROR, "MPA id exception",
-                MESSAGE, e.getMessage());
-    }
-
-    @ExceptionHandler(LikesDoesNotExistException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleEmptyLikes(final RuntimeException e) {
-        log.error("Likes is absent.", e);
-        return Map.of(ERROR, "likes exception",
-                MESSAGE, e.getMessage());
-    }
-
-    @ExceptionHandler(FriendsDoesNotExistException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleEmptyFriends(final RuntimeException e) {
-        log.error("Friends is absent.", e);
-        return Map.of(ERROR, "friends exception",
+        String className = e.getClass().getSimpleName();
+        log.error(e.getMessage(), e);
+        return Map.of(ERROR, messages.get(className),
                 MESSAGE, e.getMessage());
     }
 }

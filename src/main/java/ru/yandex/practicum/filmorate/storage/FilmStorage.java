@@ -15,21 +15,13 @@ public interface FilmStorage {
 
     List<Film> getFilms();
 
-    List<Film> getFavoriteFilms(int count);
+    List<Film> getTheMostPopularFilms(int count);
 
     Film getFilm(long id);
-
-    Genre getGenre(long id);
 
     boolean addLike(long filmId, long userId);
 
     boolean deleteLike(long filmId, long userId);
-
-    Set<Genre> getGenres();
-
-    Mpa getMpa(long id);
-
-    Set<Mpa> getMpas();
 
     boolean containsFilm(long id);
 }

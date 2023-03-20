@@ -29,6 +29,7 @@ public class UserService {
 
     public User update(User user) {
         log.info("Update request for user {}", user);
+        userStorage.containsUser(user.getId());
         fillUserName(user);
         return userStorage.update(user);
     }
@@ -40,27 +41,35 @@ public class UserService {
 
     public User getUser(long id) {
         log.info("GET request - user id={} ", id);
+        userStorage.containsUser(id);
         return userStorage.getUser(id);
     }
 
     public User addFriend(long userId, long friendId) {
         log.info("Add friend with id={} to user with id={}", friendId, userId);
+        userStorage.containsUser(userId);
+        userStorage.containsUser(friendId);
         return userStorage.addFriend(userId, friendId);
     }
 
     public User deleteFriend(long userId, long friendId) {
         log.info("Remove friend with id={} for user with id={}", friendId, userId);
+        userStorage.containsUser(userId);
+        userStorage.containsUser(friendId);
         return userStorage.deleteFriend(userId, friendId);
     }
 
     public List<User> getFriends(long userId) {
         log.info("Get list friends of user with id={}", userId);
+        userStorage.containsUser(userId);
         return userStorage.getFriends(userId);
     }
 
     public List<User> getCommonFriends(long userId, long otherUserId) {
         log.info("Get request for common list of friends of user with id={} and user with id={} "
                 , userId, otherUserId);
+        userStorage.containsUser(userId);
+        userStorage.containsUser(otherUserId);
         return userStorage.getCommonFriends(userId, otherUserId);
     }
 
