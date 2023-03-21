@@ -20,7 +20,6 @@ import java.util.Map;
 @Builder
 public class Mpa {
 
-    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Wrong name")

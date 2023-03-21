@@ -4,7 +4,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.MpaDoesNotExistException;
+import ru.yandex.practicum.filmorate.exception.ItemDoesNotExistException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.sql.ResultSet;
@@ -30,7 +30,7 @@ public class MpaDbStorage implements MpaStorage {
         try {
             return jdbcTemplate.queryForObject(GET_MPA, this::mapRowToMpa, id);
         } catch (EmptyResultDataAccessException e) {
-            throw new MpaDoesNotExistException("MPA with id=" + id + " not exist. ");
+            throw new ItemDoesNotExistException("MPA with id=" + id + " not exist. ");
         }
     }
 
@@ -39,7 +39,7 @@ public class MpaDbStorage implements MpaStorage {
         try {
             return new LinkedHashSet<>(jdbcTemplate.query(GET_MPAS, this::mapRowToMpa));
         } catch (EmptyResultDataAccessException e) {
-            throw new MpaDoesNotExistException("MPA list not exist. ");
+            throw new ItemDoesNotExistException("MPA list not exist. ");
         }
     }
 
@@ -53,12 +53,7 @@ public class MpaDbStorage implements MpaStorage {
 
     @Override
     public boolean containsMpa(long id) {
-        try {
-            jdbcTemplate.queryForObject(GET_MPA, this::mapRowToMpa, id);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            throw new MpaDoesNotExistException("MPA with id=" + id + " not exist. ");
-        }
+            return jdbcTemplate.queryForRowSet(GET_MPA, id).next();
     }
 
     private Mpa mapRowToMpa(ResultSet rs, long rowNum) throws SQLException {

@@ -26,7 +26,6 @@ import java.util.Set;
 @Builder
 public class Film {
 
-    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Name can't be empty")

@@ -1,8 +1,9 @@
-package ru.yandex.practicum.filmorate.sevice;
+package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ItemDoesNotExistException;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
@@ -26,7 +27,13 @@ public class GenreService {
 
     public Genre getGenre(int id) {
         log.info("GET request - genre with id={}", id);
-        genreStorage.containsGenre(id);
+        containsGenre(id);
         return genreStorage.getGenre(id);
+    }
+
+    private void containsGenre(long id) {
+        if (!genreStorage.containsGenre(id)) {
+            throw new ItemDoesNotExistException("Genre with id=" + id + " not exist. ");
+        }
     }
 }

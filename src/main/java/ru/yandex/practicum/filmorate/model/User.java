@@ -10,12 +10,9 @@ import lombok.ToString;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Past;
-import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -25,7 +22,6 @@ import java.util.Set;
 @Builder
 public class User {
 
-    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Email absent")
@@ -39,8 +35,6 @@ public class User {
 
     @Past(message = "Bad birthday")
     private LocalDate birthday;
-
-    private Set<Friend> friends = new HashSet<>();
 
     public Map<String, Object> toMap() {
         Map<String, Object> meaning = new HashMap<>();

@@ -4,7 +4,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.GenreDoesNotExistException;
+import ru.yandex.practicum.filmorate.exception.ItemDoesNotExistException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.ResultSet;
@@ -30,7 +30,7 @@ public class GenreDbStorage implements GenreStorage {
         try {
             return jdbcTemplate.queryForObject(GET_GENRE, this::mapRowToGenre, id);
         } catch (EmptyResultDataAccessException e) {
-            throw new GenreDoesNotExistException("Genre with id=" + id + " not exist. ");
+            throw new ItemDoesNotExistException("Genre with id=" + id + " not exist. ");
         }
     }
 
@@ -39,18 +39,13 @@ public class GenreDbStorage implements GenreStorage {
         try {
             return new LinkedHashSet<>(jdbcTemplate.query(GET_GENRES, this::mapRowToGenre));
         } catch (EmptyResultDataAccessException e) {
-            throw new GenreDoesNotExistException("Genre list not exist. ");
+            throw new ItemDoesNotExistException("Genre list not exist. ");
         }
     }
 
     @Override
     public boolean containsGenre(long id) {
-        try {
-            jdbcTemplate.queryForObject(GET_GENRE, this::mapRowToGenre, id);
-            return true;
-        } catch (EmptyResultDataAccessException e) {
-            throw new GenreDoesNotExistException("Genre with id=" + id + " not exist. ");
-        }
+        return jdbcTemplate.queryForRowSet(GET_GENRE, id).next();
     }
 
     @Override

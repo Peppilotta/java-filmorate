@@ -1,9 +1,9 @@
-package ru.yandex.practicum.filmorate.sevice;
+package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ItemDoesNotExistException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
@@ -17,7 +17,7 @@ public class UserService {
     private final UserStorage userStorage;
 
     @Autowired
-    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
+    public UserService(UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -29,7 +29,7 @@ public class UserService {
 
     public User update(User user) {
         log.info("Update request for user {}", user);
-        userStorage.containsUser(user.getId());
+        containsUser(user.getId());
         fillUserName(user);
         return userStorage.update(user);
     }
@@ -41,35 +41,41 @@ public class UserService {
 
     public User getUser(long id) {
         log.info("GET request - user id={} ", id);
-        userStorage.containsUser(id);
+        containsUser(id);
         return userStorage.getUser(id);
     }
 
     public User addFriend(long userId, long friendId) {
         log.info("Add friend with id={} to user with id={}", friendId, userId);
-        userStorage.containsUser(userId);
-        userStorage.containsUser(friendId);
+        if (userId == friendId) {
+            throw new ItemDoesNotExistException(" ids are equals. ");
+        }
+        containsUser(userId);
+        containsUser(friendId);
         return userStorage.addFriend(userId, friendId);
     }
 
     public User deleteFriend(long userId, long friendId) {
         log.info("Remove friend with id={} for user with id={}", friendId, userId);
-        userStorage.containsUser(userId);
-        userStorage.containsUser(friendId);
+        if (userId == friendId) {
+            throw new ItemDoesNotExistException(" ids are equals. ");
+        }
+        containsUser(userId);
+        containsUser(friendId);
         return userStorage.deleteFriend(userId, friendId);
     }
 
     public List<User> getFriends(long userId) {
         log.info("Get list friends of user with id={}", userId);
-        userStorage.containsUser(userId);
+        containsUser(userId);
         return userStorage.getFriends(userId);
     }
 
     public List<User> getCommonFriends(long userId, long otherUserId) {
         log.info("Get request for common list of friends of user with id={} and user with id={} "
                 , userId, otherUserId);
-        userStorage.containsUser(userId);
-        userStorage.containsUser(otherUserId);
+        containsUser(userId);
+        containsUser(otherUserId);
         return userStorage.getCommonFriends(userId, otherUserId);
     }
 
@@ -77,6 +83,12 @@ public class UserService {
         String name = user.getName();
         if (Objects.isNull(name) || name.isBlank()) {
             user.setName(user.getLogin());
+        }
+    }
+
+    private void containsUser(long id) {
+        if (!userStorage.containsUser(id)) {
+            throw new ItemDoesNotExistException("User with id=" + id + " not exist. ");
         }
     }
 }
