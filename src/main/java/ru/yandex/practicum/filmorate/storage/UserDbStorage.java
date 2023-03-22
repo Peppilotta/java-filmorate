@@ -72,13 +72,13 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User addFriend(long userId, long friendId) {
-        int updated = jdbcTemplate.update(INSERT_FRIEND, userId, friendId, false);
+        jdbcTemplate.update(INSERT_FRIEND, userId, friendId, false);
         return getUser(friendId);
     }
 
     @Override
     public User deleteFriend(long userId, long friendId) {
-        int updated = jdbcTemplate.update(DELETE_FRIEND, userId, friendId);
+        jdbcTemplate.update(DELETE_FRIEND, userId, friendId);
         return getUser(friendId);
     }
 

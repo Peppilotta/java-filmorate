@@ -10,14 +10,13 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedHashSet;
-import java.util.Optional;
 import java.util.Set;
 
 @Component
 public class GenreDbStorage implements GenreStorage {
-    private static final String GET_GENRES = "SELECT * FROM Genre ORDER BY genre_id ";
+    private static final String GET_GENRES = "SELECT * FROM genre ORDER BY genre_id ";
 
-    private static final String GET_GENRE = "SELECT * FROM Genre WHERE genre_id=?";
+    private static final String GET_GENRE = "SELECT * FROM genre WHERE genre_id=?";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -61,9 +60,5 @@ public class GenreDbStorage implements GenreStorage {
                 .id(rs.getLong("genre_id"))
                 .name(rs.getString("genre_name"))
                 .build();
-    }
-
-    private Optional<Set<Genre>> getGenresOnly() {
-        return Optional.of(new LinkedHashSet<>(jdbcTemplate.query(GET_GENRES, this::mapRowToGenre)));
     }
 }

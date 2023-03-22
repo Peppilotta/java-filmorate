@@ -15,9 +15,9 @@ import java.util.Set;
 @Component
 public class MpaDbStorage implements MpaStorage {
 
-    private static final String GET_MPAS = "SELECT * FROM MPA ORDER BY mpa_id ";
+    private static final String GET_MPAS = "SELECT * FROM mpa ORDER BY mpa_id ";
 
-    private static final String GET_MPA = "SELECT * from MPA WHERE mpa_id=?";
+    private static final String GET_MPA = "SELECT * FROM mpa WHERE mpa_id=?";
 
     private final JdbcTemplate jdbcTemplate;
 
@@ -53,7 +53,7 @@ public class MpaDbStorage implements MpaStorage {
 
     @Override
     public boolean containsMpa(long id) {
-            return jdbcTemplate.queryForRowSet(GET_MPA, id).next();
+        return jdbcTemplate.queryForRowSet(GET_MPA, id).next();
     }
 
     private Mpa mapRowToMpa(ResultSet rs, long rowNum) throws SQLException {

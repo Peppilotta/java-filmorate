@@ -10,8 +10,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -48,7 +46,7 @@ public class FilmDbStorage implements FilmStorage {
                     "WHERE F.FILM_ID=? ";
 
     private static final String GET_FILM_GENRES =
-            "SELECT f.genre_id as id, g.genre_name as name " +
+            "SELECT f.genre_id AS id, g.genre_name AS name " +
                     "FROM film_genres f " +
                     "LEFT JOIN  genre g ON f.genre_id = g.genre_id " +
                     "WHERE f.film_id = ? " +
@@ -103,12 +101,12 @@ public class FilmDbStorage implements FilmStorage {
 
     @Override
     public void addLike(long filmId, long userId) {
-        int count = jdbcTemplate.update(INSERT_LIKE, filmId, userId);
+        jdbcTemplate.update(INSERT_LIKE, filmId, userId);
     }
 
     @Override
     public void deleteLike(long filmId, long userId) {
-        int count = jdbcTemplate.update(DELETE_LIKE, filmId, userId);
+        jdbcTemplate.update(DELETE_LIKE, filmId, userId);
     }
 
     @Override
@@ -198,23 +196,15 @@ public class FilmDbStorage implements FilmStorage {
         return jdbcTemplate.update(INSERT_FILM_MPA, filmId, mpaId) > 0;
     }
 
-    private boolean updateFilmGenres(Set<Long> genreIds, long filmId) {
-        long count = 0;
-        for (long genreId : genreIds) {
-            count += jdbcTemplate.update(INSERT_FILM_GENRE, filmId, genreId);
-        }
-        return count == genreIds.size();
+    private void updateFilmGenres(Set<Long> genreIds, long filmId) {
+        genreIds.forEach(g -> jdbcTemplate.update(INSERT_FILM_GENRE, filmId, g));
     }
 
     private boolean deleteFilmMpa(Mpa mpa, long filmId) {
         return jdbcTemplate.update(DELETE_FILM_MPA, filmId, mpa.getId()) > 0;
     }
 
-    private boolean deleteFilmGenres(Set<Genre> genres, long filmId) {
-        long count = 0;
-        for (Genre genre : genres) {
-            count += jdbcTemplate.update(DELETE_FILM_GENRE, filmId, genre.getId());
-        }
-        return count == genres.size();
+    private void deleteFilmGenres(Set<Genre> genres, long filmId) {
+        genres.forEach(genre -> jdbcTemplate.update(DELETE_FILM_GENRE, filmId, genre.getId()));
     }
 }
