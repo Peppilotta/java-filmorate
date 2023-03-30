@@ -13,7 +13,9 @@ import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Getter
@@ -24,7 +26,6 @@ import java.util.Set;
 @Builder
 public class Film {
 
-    @PositiveOrZero
     private long id;
 
     @NotBlank(message = "Name can't be empty")
@@ -40,5 +41,20 @@ public class Film {
     @Positive(message = "Bad duration")
     private long duration;
 
-    private Set<Long> likeIds = new HashSet<>();
+    @PositiveOrZero
+    private int rate;
+
+    private Set<Genre> genres = new HashSet<>();
+
+    private Mpa mpa;
+
+    public Map<String, Object> toMap() {
+        Map<String, Object> meaning = new HashMap<>();
+        meaning.put("film_name", name);
+        meaning.put("release_date", releaseDate);
+        meaning.put("description", description);
+        meaning.put("duration", duration);
+        meaning.put("rate", rate);
+        return meaning;
+    }
 }

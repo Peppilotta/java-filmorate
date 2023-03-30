@@ -11,10 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.sevice.FilmService;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import javax.validation.Valid;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
@@ -29,12 +28,12 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film create(@Valid @RequestBody final Film film) {
+    public Film create(@RequestBody @Valid final Film film) {
         return filmService.create(film);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody final Film film) {
+    public Film update(@RequestBody @Valid final Film film) {
         return filmService.update(film);
     }
 
@@ -59,7 +58,7 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") @PositiveOrZero int count) {
-        return filmService.getCountFavoriteFilms(count);
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getTheMostPopularFilms(count);
     }
 }

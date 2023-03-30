@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmDbStorage;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -16,8 +16,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FilmControllerTest {
-    @Autowired
-    static InMemoryFilmStorage filmStorage;
+    static FilmDbStorage filmStorage;
     private static Validator validator;
 
     @BeforeEach

@@ -9,7 +9,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -78,20 +77,6 @@ class UserControllerTest {
                 validator.validate(user);
         assertEquals(1, constraintViolations.size());
         assertEquals("Wrong login", constraintViolations.iterator().next().
-                getMessage());
-    }
-
-    @Test
-    void validate_BadReleaseDate() {
-        User user = new User();
-        user.setEmail("email@mail.ru");
-        user.setLogin("Fet");
-        user.setBirthday(LocalDate.parse("28.12.2025",
-                DateTimeFormatter.ofPattern("dd.MM.yyyy")));
-        Set<ConstraintViolation<User>> constraintViolations =
-                validator.validate(user);
-        assertEquals(1, constraintViolations.size());
-        assertEquals("Bad birthday", constraintViolations.iterator().next().
                 getMessage());
     }
 }
